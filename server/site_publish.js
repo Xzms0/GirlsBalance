@@ -20,6 +20,7 @@ const DATA_DIR = path.join(SITE_DIR, 'data');
 const CHAPTER_DIR = path.join(DATA_DIR, 'chapters');
 const GIT_TIMEOUT = 90000;
 const MAX_OUTPUT = 4000;
+const SITE_FORMAT_VERSION = 2;
 const DEFAULT_MESSAGE = 'data: rev {revision}（{chapters} 话 / {panels} 分镜）';
 
 let busy = false;
@@ -153,6 +154,7 @@ function buildPayload(document, revision) {
   const stats = {
     schema: db.SCHEMA_NAME,
     schemaVersion: db.EXPORT_VERSION,
+    formatVersion: SITE_FORMAT_VERSION,
     revision,
     exportedAt,
     totalChapters: chapters.length,
@@ -169,6 +171,7 @@ function buildPayload(document, revision) {
   const chapterIndex = {
     schema: db.SCHEMA_NAME,
     schemaVersion: db.EXPORT_VERSION,
+    formatVersion: SITE_FORMAT_VERSION,
     revision,
     exportedAt,
     chapters: chapterRows,
@@ -176,6 +179,7 @@ function buildPayload(document, revision) {
   const manifest = {
     schema: db.SCHEMA_NAME,
     schemaVersion: db.EXPORT_VERSION,
+    formatVersion: SITE_FORMAT_VERSION,
     revision,
     exportedAt,
     title: String(meta.title || '超超你的字典'),

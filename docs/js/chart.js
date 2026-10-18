@@ -71,6 +71,78 @@
     return FALLBACK_COLORS[Math.abs(Number(char) || 0) % FALLBACK_COLORS.length];
   }
 
+  function countOf(item) {
+    if (item && item.count != null) return Number(item.count) || 0;
+    return item && item.panels != null ? Number(item.panels) || 0 : 0;
+  }
+
+  function hasRichData() {
+    var stats = state.stats || {};
+    if (Number(stats.formatVersion) >= 2) return true;
+    return (stats.characters || []).some(function (item) {
+      return item && (item.points != null || item.weighted != null);
+    });
+  }
+
+  function hasIndexMetrics() {
+    var chapters = state.index && state.index.chapters;
+    if (!Array.isArray(chapters) || !chapters.length) return false;
+    return chapters.some(function (chapter) {
+      return chapter && chapter.metrics && Object.keys(chapter.metrics).length > 0;
+    });
+  }
+
+  function canFilter() {
+    var characters = (state.stats && state.stats.characters) || [];
+    return hasIndexMetrics() && characters.some(function (item) {
+      return countOf(item) > 0 && item.firstChapter != null;
+    });
+  }
+
+  function normalizeItem(item) {
+    return {
+      char: item.char,
+      name: item.name || '',
+      count: countOf(item),
+      points: item.points == null ? null : Number(item.points) || 0,
+      weighted: item.weighted == null ? null : Number(item.weighted) || 0,
+      firstChapter: item.firstChapter == null ? null : Number(item.firstChapter),
+    };
+  }
+
+  function syncMetricOptions() {
+    var rich = hasRichData();
+    if (els.metric && els.metric.options) {
+      Array.prototype.forEach.call(els.metric.options, function (option) {
+        if (option.value !== 'count') option.disabled = !rich;
+      });
+    }
+    if (!rich) {
+      state.metric = 'count';
+      if (els.metric) els.metric.value = 'count';
+    }
+  }
+
+  function renderWarning() {
+    if (!els.warning) return;
+    var rich = hasRichData();
+    var filter = canFilter();
+    if (rich && filter) {
+      els.warning.classList.add('hidden');
+      els.warning.textContent = '';
+      return;
+    }
+    var messages = [];
+    if (!rich) {
+      messages.push('当前公开数据是旧版格式：计数可用；积分、加权需要重启本机服务后重新发布。');
+    }
+    if (!filter) {
+      messages.push('起始角色筛选暂不可用，需要重新发布数据。');
+    }
+    els.warning.textContent = messages.join(' ');
+    els.warning.classList.remove('hidden');
+  }
+
   function fetchJson(url) {
     return fetch(url, { cache: 'no-store' }).then(function (response) {
       if (!response.ok) throw new Error('HTTP ' + response.status + '：' + url);
@@ -82,7 +154,7 @@
     state.loading = value;
     ['metric', 'sort', 'order', 'start-char'].forEach(function (id) {
       if (!els[id]) return;
-      if (id === 'start-char' && !value && !state.index) {
+      if (id === 'start-char' && !value && !canFilter()) {
         els[id].disabled = true;
         return;
       }
@@ -103,6 +175,7 @@
       els['start-char'].innerHTML = '<option value="all">从最初开始</option>';
       els['start-char'].disabled = true;
     }
+    if (els.warning) els.warning.classList.add('hidden');
   }
 
   function hideEmpty() {
@@ -142,6 +215,8 @@
   }
 
   function renderAll() {
+    syncMetricOptions();
+    renderWarning();
     renderMeta();
     renderStartOptions();
     renderChart();
@@ -152,12 +227,15 @@
     var stats = state.stats || {};
     var characters = Array.isArray(stats.characters) ? stats.characters : [];
     var characterCount = Number(stats.characterCount);
-    if (!isFinite(characterCount)) {
-      characterCount = characters.filter(function (item) { return Number(item.count) > 0; }).length;
+    if (!isFinite(characterCount) || characterCount <= 0) {
+      characterCount = characters.filter(function (item) { return countOf(item) > 0; }).length;
     }
     var lastChapter = Number(stats.lastChapter);
     if (!isFinite(lastChapter) || lastChapter <= 0) {
-      lastChapter = state.index && state.index.chapters ? state.index.chapters.length : 0;
+      var chapters = state.index && state.index.chapters;
+      lastChapter = Array.isArray(chapters) && chapters.length
+        ? chapters.reduce(function (max, chapter) { return Math.max(max, Number(chapter.no) || 0); }, 0)
+        : 0;
     }
     if (els['meta-chars']) els['meta-chars'].textContent = '更新至第 ' + num(characterCount) + ' 个角色';
     if (els['meta-chapter']) els['meta-chapter'].textContent = '更新至第 ' + num(lastChapter) + ' 话';
@@ -167,24 +245,30 @@
 
   function renderStartOptions() {
     if (!els['start-char']) return;
+    if (!canFilter()) {
+      els['start-char'].innerHTML = '<option value="all">从最初开始</option>';
+      els['start-char'].value = 'all';
+      els['start-char'].disabled = true;
+      state.startChar = 'all';
+      return;
+    }
     var stats = state.stats || {};
     var characters = (Array.isArray(stats.characters) ? stats.characters : [])
-      .filter(function (item) { return Number(item.count) > 0; })
+      .filter(function (item) { return countOf(item) > 0 && item.firstChapter != null; })
       .sort(function (a, b) { return a.char - b.char; });
 
     var html = '<option value="all">从最初开始</option>';
     characters.forEach(function (item) {
       var name = item.name ? ' ' + item.name : '';
-      var chapter = item.firstChapter == null ? '—' : item.firstChapter;
       html += '<option value="' + esc(item.char) + '">' + esc(item.char) + esc(name) +
-        ' · 第 ' + esc(chapter) + ' 话</option>';
+        ' · 第 ' + esc(item.firstChapter) + ' 话</option>';
     });
     els['start-char'].innerHTML = html;
 
     var exists = characters.some(function (item) { return String(item.char) === state.startChar; });
     if (!exists) state.startChar = 'all';
     els['start-char'].value = state.startChar;
-    els['start-char'].disabled = !state.index;
+    els['start-char'].disabled = false;
   }
 
   function aggregateFromIndex(startChapter) {
@@ -204,22 +288,19 @@
 
     var stats = state.stats || {};
     return (Array.isArray(stats.characters) ? stats.characters : []).map(function (item) {
-      var total = totals[String(item.char)];
-      return {
-        char: item.char,
-        name: item.name,
-        firstChapter: item.firstChapter,
-        count: total ? total.count : 0,
-        points: total ? total.points : 0,
-        weighted: total ? total.weighted : 0,
-      };
+      var row = normalizeItem(item);
+      var total = totals[String(row.char)];
+      row.count = total ? total.count : 0;
+      row.points = total ? total.points : 0;
+      row.weighted = total ? total.weighted : 0;
+      return row;
     });
   }
 
   function currentRows() {
     var stats = state.stats || {};
-    var characters = Array.isArray(stats.characters) ? stats.characters : [];
-    if (state.startChar !== 'all' && state.index) {
+    var characters = (Array.isArray(stats.characters) ? stats.characters : []).map(normalizeItem);
+    if (state.startChar !== 'all' && canFilter()) {
       var selected = null;
       characters.forEach(function (item) {
         if (String(item.char) === state.startChar) selected = item;
@@ -297,6 +378,7 @@
     els['start-char'] = $('start-char');
     els.chart = $('chart');
     els.empty = $('empty');
+    els.warning = $('format-warning');
 
     if (els.metric) {
       els.metric.addEventListener('change', function () {

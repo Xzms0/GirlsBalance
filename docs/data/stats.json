@@ -1,618 +1,927 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
+  "formatVersion": 2,
   "revision": 6621,
-  "exportedAt": "2026-10-18T10:01:08+00:00",
+  "exportedAt": "2026-10-18T10:05:24+00:00",
   "totalChapters": 34,
   "totalPanels": 2848,
   "totalAppearances": 5305,
+  "characterCount": 9,
+  "lastChapter": 34,
+  "maxCount": 1478,
+  "maxPoints": 731.4,
+  "maxWeighted": 524.1,
   "maxPanels": 1478,
   "characters": [
     {
       "char": 0,
       "name": "爱城恋太郎",
+      "count": 1478,
       "panels": 1478,
-      "share": 0.518961
-    },
-    {
-      "char": 2,
-      "name": "院田唐音",
-      "panels": 814,
-      "share": 0.285815
+      "points": 731.4,
+      "weighted": 524.1,
+      "firstChapter": 1
     },
     {
       "char": 1,
       "name": "花园羽香里",
+      "count": 778,
       "panels": 778,
-      "share": 0.273174
+      "points": 305.6,
+      "weighted": 209.2,
+      "firstChapter": 1
+    },
+    {
+      "char": 2,
+      "name": "院田唐音",
+      "count": 814,
+      "panels": 814,
+      "points": 312.2,
+      "weighted": 212.7,
+      "firstChapter": 1
     },
     {
       "char": 3,
       "name": "好本静",
+      "count": 552,
       "panels": 552,
-      "share": 0.19382
+      "points": 235.5,
+      "weighted": 161.0,
+      "firstChapter": 3
     },
     {
       "char": 4,
       "name": "荣逢凪乃",
+      "count": 488,
       "panels": 488,
-      "share": 0.171348
+      "points": 191.7,
+      "weighted": 147.7,
+      "firstChapter": 6
     },
     {
       "char": 5,
       "name": "药膳楠莉",
+      "count": 454,
       "panels": 454,
-      "share": 0.15941
+      "points": 172.0,
+      "weighted": 145.3,
+      "firstChapter": 10
     },
     {
       "char": 6,
       "name": "花园羽羽里",
+      "count": 340,
       "panels": 340,
-      "share": 0.119382
+      "points": 136.2,
+      "weighted": 128.5,
+      "firstChapter": 15
     },
     {
       "char": 7,
       "name": "原贺胡桃",
+      "count": 249,
       "panels": 249,
-      "share": 0.08743
+      "points": 115.1,
+      "weighted": 116.2,
+      "firstChapter": 24
     },
     {
       "char": 8,
       "name": "铭户芽衣",
+      "count": 152,
       "panels": 152,
-      "share": 0.053371
+      "points": 76.9,
+      "weighted": 86.6,
+      "firstChapter": 30
     },
     {
       "char": 9,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 10,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 11,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 12,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 13,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 14,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 15,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 16,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 17,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 18,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 19,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 20,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 21,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 22,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 23,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 24,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 25,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 26,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 27,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 28,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 29,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 30,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 31,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 32,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 33,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 34,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 35,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 36,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 37,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 38,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 39,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 40,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 41,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 42,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 43,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 44,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 45,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 46,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 47,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 48,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 49,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 50,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 51,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 52,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 53,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 54,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 55,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 56,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 57,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 58,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 59,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 60,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 61,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 62,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 63,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 64,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 65,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 66,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 67,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 68,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 69,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 70,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 71,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 72,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 73,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 74,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 75,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 76,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 77,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 78,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 79,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 80,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 81,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 82,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 83,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 84,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 85,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 86,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 87,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 88,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 89,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 90,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 91,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 92,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 93,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 94,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 95,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 96,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 97,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 98,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 99,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     },
     {
       "char": 100,
       "name": "",
+      "count": 0,
       "panels": 0,
-      "share": 0.0
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
     }
   ]
 }

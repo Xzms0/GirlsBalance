@@ -12,6 +12,6 @@
     "start": "node server/server.js --open",
     "serve": "node server/server.js",
     "check": "node server/server.js --check",
-    "test": "node tests/test_db.js && node tests/test_model.js && node tests/test_ui_smoke.js && node tests/test_chart_smoke.js"
+    "test": "node tests/test_db.js && node tests/test_model.js && node tests/test_ui_smoke.js && node tests/test_chart_smoke.js && node tests/test_chart_legacy_smoke.js"
   }
 }

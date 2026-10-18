@@ -25,6 +25,8 @@ from typing import Any, Dict, List, Optional
 
 from girls_db import CHAR_MAX, CHAR_MIN, EXPORT_VERSION, SCHEMA_NAME, GirlsDB, strip_ids
 
+SITE_FORMAT_VERSION = 2
+
 SITE_DIR = Path("docs")
 DATA_DIR = SITE_DIR / "data"
 CHAPTER_DIR = DATA_DIR / "chapters"
@@ -154,6 +156,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
     stats = {
         "schema": SCHEMA_NAME,
         "schemaVersion": EXPORT_VERSION,
+        "formatVersion": SITE_FORMAT_VERSION,
         "revision": revision,
         "exportedAt": exported_at,
         "totalChapters": len(chapters),
@@ -170,6 +173,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
     chapter_index = {
         "schema": SCHEMA_NAME,
         "schemaVersion": EXPORT_VERSION,
+        "formatVersion": SITE_FORMAT_VERSION,
         "revision": revision,
         "exportedAt": exported_at,
         "chapters": chapter_rows,
@@ -177,6 +181,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
     manifest = {
         "schema": SCHEMA_NAME,
         "schemaVersion": EXPORT_VERSION,
+        "formatVersion": SITE_FORMAT_VERSION,
         "revision": revision,
         "exportedAt": exported_at,
         "title": str(meta.get("title") or "超超你的字典"),

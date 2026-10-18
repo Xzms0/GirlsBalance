@@ -44,7 +44,7 @@ function makeElement(id) {
 
 const elements = {};
 ['meta-chars', 'meta-chapter', 'meta-updated', 'revision', 'metric', 'sort', 'order',
-  'start-char', 'chart', 'empty'].forEach((id) => {
+  'start-char', 'chart', 'empty', 'format-warning'].forEach((id) => {
   elements[id] = makeElement(id);
 });
 elements.metric.value = 'count';
@@ -52,6 +52,7 @@ elements.sort.value = 'char';
 elements.order.value = 'asc';
 elements['start-char'].value = 'all';
 elements.empty.classList.add('hidden');
+elements['format-warning'].classList.add('hidden');
 
 const documentStub = {
   readyState: 'complete',
@@ -123,6 +124,7 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   });
 
   assert.strictEqual(elements.revision.textContent, String(manifest.revision));
+  assert.ok(elements['format-warning'].classList.contains('hidden'), '新格式不应显示旧数据警告');
   assert.ok(elements['meta-chars'].textContent.includes(`第 ${stats.characterCount} 个角色`), '角色更新提示');
   assert.ok(elements['meta-chapter'].textContent.includes(`第 ${stats.lastChapter} 话`), '话数更新提示');
   assert.ok(/最后更新 \d{4}-\d{2}-\d{2}/.test(elements['meta-updated'].textContent), '最后更新日期');

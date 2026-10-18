@@ -113,6 +113,8 @@ python tools/publish.py --force         # 允许空库覆盖已有公开数据�
 
 > 安全阀：如果当前 SQLite 是空的，而 `docs/data` 里已有分镜，按钮会拒绝发布，避免新机器/空库误覆盖公开数据。确实要清空时用 `python tools/publish.py --force`。
 
+> 如果发布后页面里角色变成 0：通常是本机服务还在跑更新前的旧代码（旧的 `site_publish` 进程），所以只更新了 manifest 的章节/分镜数，`stats.json` 仍是旧格式。**重启 `start.bat` / `server.py` 后再点一次发布**即可；新数据会带 `formatVersion: 2`。页面现在也会检测旧格式、回退显示计数并给出提示。
+
 > 注意：`git push` 会推送当前分支上所有未推送的提交，不只是数据提交。发布前如果还有其它本地提交，它们也会一起上去。
 
 ### 数据量变大时
@@ -178,24 +180,25 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 5908,
-  "exportedAt": "2026-10-18T08:55:19+00:00",
-  "totalChapters": 32,
-  "totalPanels": 2574,
-  "totalAppearances": 4746,
-  "characterCount": 8,
-  "lastChapter": 32,
-  "maxCount": 1370,
-  "maxPoints": 682.9,
-  "maxWeighted": 469.6,
+  "formatVersion": 2,
+  "revision": 6621,
+  "exportedAt": "2026-10-18T10:05:24+00:00",
+  "totalChapters": 34,
+  "totalPanels": 2848,
+  "totalAppearances": 5305,
+  "characterCount": 9,
+  "lastChapter": 34,
+  "maxCount": 1478,
+  "maxPoints": 731.4,
+  "maxWeighted": 524.1,
   "characters": [
     {
       "char": 0,
       "name": "爱城恋太郎",
-      "count": 1370,
-      "panels": 1370,
-      "points": 682.9,
-      "weighted": 469.6,
+      "count": 1478,
+      "panels": 1478,
+      "points": 731.4,
+      "weighted": 524.1,
       "firstChapter": 1
     }
   ]
@@ -203,6 +206,8 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```
 
 `characters` 固定包含 0–100 全部编号，按角色编号升序；`count` / `panels` 是分镜计数，`points` 是积分，`weighted` 是加权，`firstChapter` 是首次登场话（没有记录时为 `null`）。`points` / `weighted` 保留一位小数。
+
+`formatVersion: 2` 是公开数据的格式版本。旧版发布数据没有这个字段：页面仍会用 `panels` 回退显示计数，但会提示“旧版格式”，并禁用积分 / 加权 / 起始角色筛选。
 
 三种统计口径：
 
@@ -216,11 +221,12 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 5908,
-  "exportedAt": "2026-10-18T08:55:19+00:00",
+  "formatVersion": 2,
+  "revision": 6621,
+  "exportedAt": "2026-10-18T10:05:24+00:00",
   "title": "超超你的字典",
   "author": "Xzer0",
-  "counts": { "chapters": 32, "panels": 2574, "appearances": 4746, "characters": 8, "charMin": 0, "charMax": 100 },
+  "counts": { "chapters": 34, "panels": 2848, "appearances": 5305, "characters": 9, "charMin": 0, "charMax": 100 },
   "files": { "stats": "stats.json", "chapters": "chapters/index.json" }
 }
 ```
@@ -230,7 +236,9 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```json
 {
   "schema": "girls_dict",
-  "revision": 5908,
+  "schemaVersion": 1,
+  "formatVersion": 2,
+  "revision": 6621,
   "chapters": [
     {
       "no": 1,
@@ -432,6 +440,7 @@ node tests/test_db.js
 node tests/test_model.js
 node tests/test_ui_smoke.js
 node tests/test_chart_smoke.js
+node tests/test_chart_legacy_smoke.js
 ```
 
 `data/sample.girls_dict.json` 是测试用的 3 话示例数据，不参与真实发布。
