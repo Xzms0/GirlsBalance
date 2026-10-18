@@ -1,8 +1,8 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 6639,
-  "exportedAt": "2026-10-18T10:18:32+00:00",
+  "revision": 6640,
+  "exportedAt": "2026-10-18T10:20:40+00:00",
   "chapters": [
     {
       "no": 1,
@@ -592,15 +592,6 @@
       "appearances": 0,
       "characters": [],
       "file": "0040.json"
-    },
-    {
-      "no": 41,
-      "title": "美美美学姐的美丽指南（大概）",
-      "note": "",
-      "panelCount": 1,
-      "appearances": 0,
-      "characters": [],
-      "file": "0041.json"
     }
   ]
 }
