@@ -1,4 +1,4 @@
-# 超超你的字典
+# 超超你的小站
 
 用于辅助录入漫画《超超超超超喜欢你的100个女朋友》中各角色在各分镜的出场情况。
 
@@ -8,8 +8,6 @@
 
 - **`public/`**：本机管理端。只在 `http://127.0.0.1:8777` 运行，负责录入、修改 SQLite、发布。
 - **`docs/`**：公开只读站「超超你的小站」。由 GitHub Pages 托管，展示各角色登场统计的条形图，支持计数 / 积分 / 加权三种口径。
-
-`docs/` 可以部署到 GitHub Pages；`public/`、`server/`、`data/` 不会出现在公开站点里。
 
 ---
 
@@ -43,22 +41,6 @@ python -m http.server 8788 --directory docs
 
 访问 `http://127.0.0.1:8788/`。公开站只读 `docs/data/` 下的 JSON，不需要启动后端。
 
-### 公开站功能
-
-- 标题「超超你的小站」，英文标识 `GIRLS BALANCE`；
-- 标题下方自动显示：更新至第几个角色、更新至第几话、最后更新日期；
-- 条形图默认按角色编号排序，可切换为按数据排序，并可选择升序 / 降序；
-- 没有记录的角色不显示；
-- 三种统计：**计数**、**积分**、**加权**；
-- 可选择某个角色，只统计从该角色首次登场话到最新话的数据；
-- 每个角色使用 `docs/colors.json` 里对应的十六进制颜色；
-- 页脚保留数据版本，并提供 GitHub、Bilibili、邮箱链接。
-
-> **修改页脚链接**：打开 [`docs/index.html`](docs/index.html)，找到页脚的 `<nav class="links">`，改三个 `<a>` 的 `href` 和文字即可；HTML 里也有注释标记。数据版本由 [`docs/js/chart.js`](docs/js/chart.js) 自动填。
->
-> 修改 `site.css` / `chart.js` 后，把 `docs/index.html` 里的 `?v=3` 递增，避免 GitHub Pages 和浏览器继续使用旧缓存。
-
----
 
 ## 发布公开数据
 
@@ -70,7 +52,6 @@ python -m http.server 8788 --directory docs
 4. 推送到 `origin`；
 5. 如果 GitHub Pages 的发布源是 `main` / `docs`，站点会自动更新。
 
-浏览器不接触任何 Git 凭据；提交和推送都由本机服务端完成，使用系统 Git 凭据管理器 / SSH Key。
 
 ### 首次配置
 
@@ -383,17 +364,6 @@ Schema 见 [`schema/girls_dict.schema.json`](schema/girls_dict.schema.json)。
 
 ---
 
-## 安全说明
-
-- **管理端只在本机运行**：`server.py` 默认绑定 `127.0.0.1`，不要改成 `0.0.0.0`，也不要做公网端口映射。
-- **公开站是纯静态的**：`docs/` 没有写接口，也没有任何 Token。
-- **数据库不进 Git**：`.gitignore` 已排除 `/data/*.sqlite3`、WAL、快照；公开的只有 `docs/data/*.json`。
-- **发布凭据不进浏览器**：Git 凭据由系统凭据管理器 / SSH Key 持有。
-- 如果需要在手机或外网编辑，用 **Tailscale** 或 **Cloudflare Tunnel + Access** 把本机服务私密地暴露给指定账号，不要裸奔公网。通过隧道访问时，用 `--allow-origin https://<管理端域名>` 放行该来源，并确保 Access 只允许你。
-- `docs/data` 里的标题、备注、角色名都会公开；不想公开的备注请在发布前移除。
-
----
-
 ## 项目结构
 
 ```
@@ -429,20 +399,3 @@ girls_dict/
 └─ data/                       本地 SQLite、快照、示例 JSON（数据库本身不提交）
 ```
 
----
-
-## 测试
-
-```bash
-python tests/test_girls_db.py
-python tests/test_site_publish.py
-node tests/test_db.js
-node tests/test_model.js
-node tests/test_ui_smoke.js
-node tests/test_chart_smoke.js
-node tests/test_chart_legacy_smoke.js
-```
-
-`data/sample.girls_dict.json` 是测试用的 3 话示例数据，不参与真实发布。
-
-`HANDOFF.md`、`TASK.md` 默认被 `.gitignore` 排除；如果要一起开源，删掉 `.gitignore` 里对应两行即可。
