@@ -45,8 +45,8 @@
     if (!isFinite(number)) number = 0;
     if (metric === 'count') return Math.round(number).toLocaleString('zh-CN');
     return number.toLocaleString('zh-CN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
     });
   }
 
@@ -176,7 +176,7 @@
     characters.forEach(function (item) {
       var name = item.name ? ' ' + item.name : '';
       var chapter = item.firstChapter == null ? '—' : item.firstChapter;
-      html += '<option value="' + esc(item.char) + '">#' + esc(item.char) + esc(name) +
+      html += '<option value="' + esc(item.char) + '">' + esc(item.char) + esc(name) +
         ' · 第 ' + esc(chapter) + ' 话</option>';
     });
     els['start-char'].innerHTML = html;
@@ -270,7 +270,7 @@
         ' · ' + formatValue(item.value, state.metric);
       return '<div class="row" role="listitem" style="--c:' + color + '" ' +
         'title="' + esc(label) + '" aria-label="' + esc(label) + '">' +
-        '<span class="char">#' + esc(item.char) + '</span>' +
+        '<span class="char">' + esc(item.char) + '</span>' +
         '<span class="name' + (name ? '' : ' empty-name') + '">' + esc(name) + '</span>' +
         '<span class="track"><span class="bar" style="width:' + width.toFixed(2) +
         '%;background:' + color + '"></span></span>' +

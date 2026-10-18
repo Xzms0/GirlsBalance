@@ -39,8 +39,8 @@ class SitePublishTest(unittest.TestCase):
         self.assertEqual(self.stats["characterCount"], 6)
         self.assertEqual(self.stats["lastChapter"], 3)
         self.assertEqual(self.stats["maxCount"], 6)
-        self.assertEqual(self.stats["maxPoints"], 18.67)
-        self.assertEqual(self.stats["maxWeighted"], 11.08)
+        self.assertEqual(self.stats["maxPoints"], 1.9)
+        self.assertEqual(self.stats["maxWeighted"], 1.1)
         self.assertEqual(self.stats["maxPanels"], 6)
         self.assertEqual(len(self.stats["characters"]), 101)
         self.assertEqual(self.stats["characters"][0]["char"], 0)
@@ -51,27 +51,27 @@ class SitePublishTest(unittest.TestCase):
         by_char = {item["char"]: item for item in self.stats["characters"]}
         self.assertEqual(
             (by_char[1]["count"], by_char[1]["points"], by_char[1]["weighted"], by_char[1]["firstChapter"]),
-            (6, 18.67, 11.08, 1),
+            (6, 1.9, 1.1, 1),
         )
         self.assertEqual(
             (by_char[2]["count"], by_char[2]["points"], by_char[2]["weighted"], by_char[2]["firstChapter"]),
-            (4, 14.67, 7.58, 1),
+            (4, 1.5, 0.8, 1),
         )
         self.assertEqual(
             (by_char[5]["count"], by_char[5]["points"], by_char[5]["weighted"], by_char[5]["firstChapter"]),
-            (4, 12.67, 7.33, 1),
+            (4, 1.3, 0.7, 1),
         )
         self.assertEqual(
             (by_char[12]["count"], by_char[12]["points"], by_char[12]["weighted"], by_char[12]["firstChapter"]),
-            (3, 10.0, 6.25, 2),
+            (3, 1.0, 0.6, 2),
         )
         self.assertEqual(
             (by_char[23]["count"], by_char[23]["points"], by_char[23]["weighted"], by_char[23]["firstChapter"]),
-            (4, 12.0, 7.75, 1),
+            (4, 1.2, 0.8, 1),
         )
         self.assertEqual(
             (by_char[100]["count"], by_char[100]["points"], by_char[100]["weighted"], by_char[100]["firstChapter"]),
-            (2, 12.0, 9.0, 3),
+            (2, 1.2, 0.9, 3),
         )
 
     def test_chapter_index_and_files(self) -> None:
@@ -81,7 +81,7 @@ class SitePublishTest(unittest.TestCase):
         self.assertEqual(first["weight"], 4)
         self.assertEqual(first["file"], "0001.json")
         self.assertEqual(first["metrics"]["1"], {
-            "count": 3, "points": 8.666667, "weighted": 4.333333,
+            "count": 3, "points": 0.866667, "weighted": 0.433333,
         })
         self.assertEqual(self.index["chapters"][1]["weight"], 5)
         self.assertEqual(self.index["chapters"][2]["weight"], 6)
@@ -103,8 +103,8 @@ class SitePublishTest(unittest.TestCase):
         by_char = {item["char"]: item for item in self.stats["characters"]}
         for char, total in totals.items():
             self.assertEqual(by_char[char]["count"], total["count"])
-            self.assertAlmostEqual(by_char[char]["points"], round(total["points"], 2), places=2)
-            self.assertAlmostEqual(by_char[char]["weighted"], round(total["weighted"], 2), places=2)
+            self.assertAlmostEqual(by_char[char]["points"], round(total["points"], 1), places=1)
+            self.assertAlmostEqual(by_char[char]["weighted"], round(total["weighted"], 1), places=1)
 
     def test_write_payload_cleans_stale_chapters(self) -> None:
         work = ROOT / ".tmp-test-run" / uuid.uuid4().hex

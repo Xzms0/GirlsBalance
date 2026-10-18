@@ -84,8 +84,8 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
             chapter_appearances += count
             if not count:
                 continue
-            point_each = 8.0 / count
-            weighted_each = float(weight) / count
+            point_each = 8.0 / 10.0 / count
+            weighted_each = float(weight) / 10.0 / count
             for char in chars:
                 metric = chapter_metrics.setdefault(
                     char, {"count": 0.0, "points": 0.0, "weighted": 0.0})
@@ -141,8 +141,8 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
             "name": names.get(str(char), ""),
             "count": count,
             "panels": count,
-            "points": round(total["points"], 2) if total else 0.0,
-            "weighted": round(total["weighted"], 2) if total else 0.0,
+            "points": round(total["points"], 1) if total else 0.0,
+            "weighted": round(total["weighted"], 1) if total else 0.0,
             "firstChapter": first_chapter.get(char),
         })
     character_count = sum(1 for item in characters if item["count"] > 0)

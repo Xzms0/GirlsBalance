@@ -55,6 +55,8 @@ python -m http.server 8788 --directory docs
 - 页脚保留数据版本，并提供 GitHub、Bilibili、邮箱链接。
 
 > **修改页脚链接**：打开 [`docs/index.html`](docs/index.html)，找到页脚的 `<nav class="links">`，改三个 `<a>` 的 `href` 和文字即可；HTML 里也有注释标记。数据版本由 [`docs/js/chart.js`](docs/js/chart.js) 自动填。
+>
+> 修改 `site.css` / `chart.js` 后，把 `docs/index.html` 里的 `?v=3` 递增，避免 GitHub Pages 和浏览器继续使用旧缓存。
 
 ---
 
@@ -177,36 +179,36 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   "schema": "girls_dict",
   "schemaVersion": 1,
   "revision": 5908,
-  "exportedAt": "2026-10-18T08:23:08+00:00",
+  "exportedAt": "2026-10-18T08:55:19+00:00",
   "totalChapters": 32,
   "totalPanels": 2574,
   "totalAppearances": 4746,
   "characterCount": 8,
   "lastChapter": 32,
   "maxCount": 1370,
-  "maxPoints": 6829.3,
-  "maxWeighted": 4695.92,
+  "maxPoints": 682.9,
+  "maxWeighted": 469.6,
   "characters": [
     {
       "char": 0,
       "name": "爱城恋太郎",
       "count": 1370,
       "panels": 1370,
-      "points": 6829.3,
-      "weighted": 4695.92,
+      "points": 682.9,
+      "weighted": 469.6,
       "firstChapter": 1
     }
   ]
 }
 ```
 
-`characters` 固定包含 0–100 全部编号，按角色编号升序；`count` / `panels` 是分镜计数，`points` 是积分，`weighted` 是加权，`firstChapter` 是首次登场话（没有记录时为 `null`）。`points` / `weighted` 保留两位小数。
+`characters` 固定包含 0–100 全部编号，按角色编号升序；`count` / `panels` 是分镜计数，`points` 是积分，`weighted` 是加权，`firstChapter` 是首次登场话（没有记录时为 `null`）。`points` / `weighted` 保留一位小数。
 
 三种统计口径：
 
 - **计数**：角色出现在多少个分镜里。
-- **积分**：每个分镜固定 8 分，平均分给该分镜中出现的所有角色；一个分镜有 k 个角色，每人得 `8 / k`。
-- **加权**：每一话先算出“截至这一话已经登场过的角色总数 W”（这一话新登场的角色也计入），该话每个分镜的总分就是 W，再平均分给分镜里的 k 个角色，每人得 `W / k`。
+- **积分**：每个分镜固定 8 分，统计结果统一除以 10（即每个分镜 0.8 分），平均分给该分镜中出现的所有角色；一个分镜有 k 个角色，每人得 `0.8 / k`。
+- **加权**：每一话先算出“截至这一话已经登场过的角色总数 W”（这一话新登场的角色也计入），该话每个分镜的总分就是 `W / 10`，再平均分给分镜里的 k 个角色，每人得 `W / 10 / k`。
 
 `docs/data/manifest.json`：
 
@@ -215,7 +217,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   "schema": "girls_dict",
   "schemaVersion": 1,
   "revision": 5908,
-  "exportedAt": "2026-10-18T08:23:08+00:00",
+  "exportedAt": "2026-10-18T08:55:19+00:00",
   "title": "超超你的字典",
   "author": "Xzer0",
   "counts": { "chapters": 32, "panels": 2574, "appearances": 4746, "characters": 8, "charMin": 0, "charMax": 100 },
@@ -239,7 +241,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
       "characters": [0, 1, 2],
       "weight": 3,
       "metrics": {
-        "0": { "count": 204, "points": 1632.0, "weighted": 612.0 }
+        "0": { "count": 134, "points": 81.866667, "weighted": 30.7 }
       },
       "file": "0001.json"
     }

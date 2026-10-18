@@ -2,15 +2,15 @@
   "schema": "girls_dict",
   "schemaVersion": 1,
   "revision": 5908,
-  "exportedAt": "2026-10-18T08:23:08+00:00",
+  "exportedAt": "2026-10-18T08:55:19+00:00",
   "totalChapters": 32,
   "totalPanels": 2574,
   "totalAppearances": 4746,
   "characterCount": 8,
   "lastChapter": 32,
   "maxCount": 1370,
-  "maxPoints": 6829.3,
-  "maxWeighted": 4695.92,
+  "maxPoints": 682.9,
+  "maxWeighted": 469.6,
   "maxPanels": 1370,
   "characters": [
     {
@@ -18,8 +18,8 @@
       "name": "爱城恋太郎",
       "count": 1370,
       "panels": 1370,
-      "points": 6829.3,
-      "weighted": 4695.92,
+      "points": 682.9,
+      "weighted": 469.6,
       "firstChapter": 1
     },
     {
@@ -27,8 +27,8 @@
       "name": "花园羽香里",
       "count": 738,
       "panels": 738,
-      "points": 2935.34,
-      "weighted": 1955.43,
+      "points": 293.5,
+      "weighted": 195.5,
       "firstChapter": 1
     },
     {
@@ -36,8 +36,8 @@
       "name": "院田唐音",
       "count": 769,
       "panels": 769,
-      "points": 2964.54,
-      "weighted": 1949.13,
+      "points": 296.5,
+      "weighted": 194.9,
       "firstChapter": 1
     },
     {
@@ -45,8 +45,8 @@
       "name": "好本静",
       "count": 512,
       "panels": 512,
-      "points": 2230.28,
-      "weighted": 1469.68,
+      "points": 223.0,
+      "weighted": 147.0,
       "firstChapter": 3
     },
     {
@@ -54,8 +54,8 @@
       "name": "荣逢凪乃",
       "count": 447,
       "panels": 447,
-      "points": 1779.61,
-      "weighted": 1322.5,
+      "points": 178.0,
+      "weighted": 132.2,
       "firstChapter": 6
     },
     {
@@ -63,8 +63,8 @@
       "name": "药膳楠莉",
       "count": 418,
       "panels": 418,
-      "points": 1631.61,
-      "weighted": 1354.28,
+      "points": 163.2,
+      "weighted": 135.4,
       "firstChapter": 10
     },
     {
@@ -72,8 +72,8 @@
       "name": "花园羽羽里",
       "count": 278,
       "panels": 278,
-      "points": 1135.34,
-      "weighted": 1030.1,
+      "points": 113.5,
+      "weighted": 103.0,
       "firstChapter": 15
     },
     {
@@ -81,8 +81,8 @@
       "name": "原贺胡桃",
       "count": 214,
       "panels": 214,
-      "points": 1061.97,
-      "weighted": 1061.97,
+      "points": 106.2,
+      "weighted": 106.2,
       "firstChapter": 24
     },
     {

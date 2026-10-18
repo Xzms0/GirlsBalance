@@ -80,8 +80,8 @@ function buildPayload(document, revision) {
       const count = chars.length;
       chapterAppearances += count;
       if (!count) return;
-      const pointEach = 8 / count;
-      const weightedEach = weight / count;
+      const pointEach = 8 / 10 / count;
+      const weightedEach = (weight / 10) / count;
       chars.forEach((char) => {
         if (!chapterMetrics[char]) chapterMetrics[char] = { count: 0, points: 0, weighted: 0 };
         chapterMetrics[char].count += 1;
@@ -139,8 +139,8 @@ function buildPayload(document, revision) {
       name: names[String(char)] || '',
       count,
       panels: count,
-      points: total ? Number(total.points.toFixed(2)) : 0,
-      weighted: total ? Number(total.weighted.toFixed(2)) : 0,
+      points: total ? Number(total.points.toFixed(1)) : 0,
+      weighted: total ? Number(total.weighted.toFixed(1)) : 0,
       firstChapter: firstChapter[char] === undefined ? null : firstChapter[char],
     });
   }

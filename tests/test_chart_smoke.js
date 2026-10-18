@@ -14,6 +14,7 @@ const stats = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'data', 'stats.
 const index = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'data', 'chapters', 'index.json'), 'utf8'));
 const colors = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'colors.json'), 'utf8'));
 const pageHtml = fs.readFileSync(path.join(ROOT, 'docs', 'index.html'), 'utf8');
+const siteCss = fs.readFileSync(path.join(ROOT, 'docs', 'css', 'site.css'), 'utf8');
 
 function makeElement(id) {
   return {
@@ -114,11 +115,11 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   const maxChar = visible[visible.length - 1].char;
   const byCount = visible.slice().sort((a, b) => (b.count - a.count) || (a.char - b.char))[0];
   const firstChar = (html) => {
-    const match = html.match(/class="char">#(\d+)<\/span>/);
+    const match = html.match(/class="char">(\d+)<\/span>/);
     return match ? Number(match[1]) : null;
   };
   const valueText = (number) => number.toLocaleString('zh-CN', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
+    minimumFractionDigits: 1, maximumFractionDigits: 1,
   });
 
   assert.strictEqual(elements.revision.textContent, String(manifest.revision));
@@ -132,18 +133,18 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   assert.ok(new Set(widths(elements.chart.innerHTML)).size > 1, '条形长度不应全部一致');
   assert.ok(!elements.chart.innerHTML.includes('<small'), '不需要百分比');
   assert.ok(elements.chart.innerHTML.includes('style="--c:#'), '每行应有角色颜色');
-  assert.ok(elements['start-char'].innerHTML.includes(`value="${minChar}"`), '起始角色选项');
-  assert.strictEqual((elements['start-char'].innerHTML.match(/<option/g) || []).length, visible.length + 1,
+  assert.ok(elements['start-char'].innerHTML.includes(`value="${minChar}"`), '起始角色选项');  assert.strictEqual((elements['start-char'].innerHTML.match(/<option/g) || []).length, visible.length + 1,
     '起始角色选项数量');
 
   /* 积分 / 加权 */
   elements.metric.value = 'points';
   elements.metric.fire('change');
-  assert.ok(/\d+\.\d{2}/.test(elements.chart.innerHTML), '积分应保留两位小数');
+  assert.ok(!elements.chart.innerHTML.includes('class="char">#'), '编号不加 #');
+  assert.ok(/\d+\.\d/.test(elements.chart.innerHTML), '积分应保留一位小数');
   assert.ok(elements.chart.innerHTML.includes(valueText(visible[0].points)), '积分应使用 points 数据');
   elements.metric.value = 'weighted';
   elements.metric.fire('change');
-  assert.ok(/\d+\.\d{2}/.test(elements.chart.innerHTML), '加权应保留两位小数');
+  assert.ok(/\d+\.\d/.test(elements.chart.innerHTML), '加权应保留一位小数');
   assert.ok(elements.chart.innerHTML.includes(valueText(visible[0].weighted)), '加权应使用 weighted 数据');
   elements.metric.value = 'count';
   elements.metric.fire('change');
@@ -169,7 +170,7 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   elements['start-char'].fire('change');
   const after = elements.chart.innerHTML;
   assert.notStrictEqual(after, before, '选择起始角色后统计应变化');
-  assert.ok(after.includes(`#${late.char}`), '过滤后仍应显示该角色');
+  assert.ok(after.includes('class="char">' + late.char + '<'), '过滤后仍应显示该角色');
   assert.ok(rowCount(after) > 0 && rowCount(after) <= visible.length, '过滤后仍有记录的角色都显示');
   assert.ok(!after.includes('class="rank"'), '过滤后仍无顺序号');
 
@@ -185,6 +186,9 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   assert.ok(!pageHtml.includes('id="cards"'), '不应有四个统计框');
   assert.ok(!pageHtml.includes('download-stats'), '不应有下载链接');
   assert.ok(!pageHtml.includes('data/chapters/index.json'), '不应保留分话数据链接');
+  assert.ok(/\.track\s*\{[^}]*display:\s*block/s.test(siteCss), '轨道需要 display:block');
+  assert.ok(/\.bar\s*\{[^}]*display:\s*block/s.test(siteCss), '条形需要 display:block 才能应用宽高');
+  assert.ok(elements.chart.innerHTML.includes('class="bar" style="width:'), '条形应有显式宽度');
 
   console.log('公开统计页冒烟测试通过');
 })().catch((error) => {
