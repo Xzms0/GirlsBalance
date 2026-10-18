@@ -2,8 +2,8 @@
   "schema": "girls_dict",
   "schemaVersion": 1,
   "formatVersion": 2,
-  "revision": 8717,
-  "exportedAt": "2026-10-18T16:27:24+00:00",
+  "revision": 9492,
+  "exportedAt": "2026-10-18T17:23:27+00:00",
   "chapters": [
     {
       "no": 1,
@@ -768,6 +768,81 @@
         "10": {"count": 25, "points": 8.493074, "weighted": 11.677976}
       },
       "file": "0041.json"
-    }
+    },
+    {
+      "no": 42,
+      "title": "毫不稀奇，单纯的换发型回",
+      "note": "",
+      "panelCount": 88,
+      "appearances": 237,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "weight": 11,
+      "metrics": {
+        "0": {"count": 35, "points": 10.834949, "weighted": 14.898056},
+        "1": {"count": 16, "points": 5.022569, "weighted": 6.906032},
+        "2": {"count": 27, "points": 7.922569, "weighted": 10.893532},
+        "3": {"count": 24, "points": 5.002569, "weighted": 6.878532},
+        "4": {"count": 17, "points": 3.055902, "weighted": 4.201865},
+        "5": {"count": 21, "points": 5.522569, "weighted": 7.593532},
+        "6": {"count": 14, "points": 6.059394, "weighted": 8.331667},
+        "7": {"count": 15, "points": 6.592727, "weighted": 9.065},
+        "8": {"count": 27, "points": 9.381616, "weighted": 12.899722},
+        "9": {"count": 21, "points": 7.149235, "weighted": 9.830198},
+        "10": {"count": 20, "points": 3.855902, "weighted": 5.301865}
+      },
+      "file": "0042.json"
+    },
+    {
+      "no": 43,
+      "title": "你将世界终结，然后",
+      "note": "",
+      "panelCount": 72,
+      "appearances": 132,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "weight": 11,
+      "metrics": {
+        "0": {"count": 43, "points": 24.046061, "weighted": 33.063333},
+        "1": {"count": 5, "points": 0.872727, "weighted": 1.2},
+        "2": {"count": 4, "points": 0.472727, "weighted": 0.65},
+        "3": {"count": 7, "points": 2.312727, "weighted": 3.18},
+        "4": {"count": 9, "points": 2.846061, "weighted": 3.913333},
+        "5": {"count": 4, "points": 0.472727, "weighted": 0.65},
+        "6": {"count": 35, "points": 20.472727, "weighted": 28.15},
+        "7": {"count": 4, "points": 0.472727, "weighted": 0.65},
+        "8": {"count": 8, "points": 2.312727, "weighted": 3.18},
+        "9": {"count": 4, "points": 0.472727, "weighted": 0.65},
+        "10": {"count": 9, "points": 2.846061, "weighted": 3.913333}
+      },
+      "file": "0043.json"
+    },
+    {
+      "no": 44,
+      "title": "想吃你的牛舌",
+      "note": "",
+      "panelCount": 93,
+      "appearances": 252,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "weight": 11,
+      "metrics": {
+        "0": {"count": 43, "points": 18.225455, "weighted": 25.06},
+        "1": {"count": 16, "points": 2.633074, "weighted": 3.620476},
+        "2": {"count": 16, "points": 1.993074, "weighted": 2.740476},
+        "3": {"count": 17, "points": 2.45974, "weighted": 3.382143},
+        "4": {"count": 13, "points": 1.233074, "weighted": 1.695476},
+        "5": {"count": 15, "points": 1.793074, "weighted": 2.465476},
+        "6": {"count": 30, "points": 9.838788, "weighted": 13.528333},
+        "7": {"count": 56, "points": 29.318788, "weighted": 40.313333},
+        "8": {"count": 16, "points": 3.012121, "weighted": 4.141667},
+        "9": {"count": 16, "points": 2.366407, "weighted": 3.25381},
+        "10": {"count": 14, "points": 1.526407, "weighted": 2.09881}
+      },
+      "file": "0044.json"
+    },
+    {"no": 45, "title": "华暮同学", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0045.json"},
+    {"no": 46, "title": "鬼也心动！校内捉迷藏", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0046.json"},
+    {"no": 47, "title": "芽衣小姐的送礼大作战", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0047.json"},
+    {"no": 48, "title": "消失的傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0048.json"},
+    {"no": 49, "title": "夺回傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0049.json"},
+    {"no": 50, "title": "受疼爱的傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0050.json"}
   ]
 }
