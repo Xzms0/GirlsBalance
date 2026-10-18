@@ -4,9 +4,8 @@
  * 上层界面只认同一套接口，因此换存储方式不用改一行界面代码：
  *
  *   http —— 本地服务（SQLite）。补丁式增量写入：改一个编号只发一条 panel.chars。
- *   idb  —— 浏览器自带数据库 IndexedDB。每个话一条记录，改哪条写哪条，
- *           容量按硬盘走（不像 localStorage 只有 5MB 上限）。
- *   file —— 一个 .json 文件（File System Access API）。整份重写，适合导入/导出与交换。
+ *   idb  —— 浏览器自带数据库 IndexedDB。每个话一条记录，改哪条写哪条。
+ *   file —— 一个 .json 文件（File System Access API）。整份重写，适合备份/恢复。
  *
  * 统一接口（store.js 只依赖这些）：
  *   status()                    -> Promise<{ok, canWrite, detail, info?}>
@@ -15,12 +14,12 @@
  *   pick()                      -> Promise<{ok, detail}>         选择/连接数据源
  *   exportDownload(format)      -> Promise<void>
  *   listBackups() / createBackup(tag) / restoreBackup(name)
- *   raw()                       -> Promise<string>               交换格式 JSON 文本
+ *   raw()                       -> Promise<string>               JSON 文本
  */
 (function (global) {
   'use strict';
 
-  var LS_PREFIX = 'girls_dict.';
+  var LS_PREFIX = 'girls_dict.';   // 只存 UI 偏好（数据源、服务地址），不存业务数据
   var IDB_NAME = 'girls_dict';
   var IDB_VERSION = 1;
   var model = global.GD.model;
@@ -200,7 +199,7 @@
       exportDownload: function (format) {
         var link = document.createElement('a');
         link.href = base + '/api/db/export?format=' + encodeURIComponent(format || 'json');
-        link.download = 'girls_dict.' + (format === 'md' ? 'md' : format === 'csv' ? 'csv' : format === 'sqlite' ? 'sqlite3' : 'json');
+        link.download = 'girls_dict.' + (format === 'csv' ? 'csv' : format === 'sqlite' ? 'sqlite3' : 'json');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -498,12 +497,8 @@
       text = '\ufeff' + model.toCsv(db);
       mime = 'text/csv';
       name = 'girls_dict.csv';
-    } else if (format === 'md') {
-      text = model.toMarkdown(db);
-      mime = 'text/markdown';
-      name = 'girls_dict.md';
     } else {
-      text = JSON.stringify(model.toExportDocument(db), null, 2) + '\n';
+      text = model.prettyJson(model.toExportDocument(db));
       mime = 'application/json';
       name = 'girls_dict.json';
     }
@@ -511,7 +506,7 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 3) JSON 文件适配器（交换用）
+   * 3) JSON 文件适配器（备份/恢复）
    * ------------------------------------------------------------------ */
   function createFileAdapter() {
     var handle = null;
@@ -543,7 +538,7 @@
 
     var adapter = {
       kind: 'file',
-      label: 'JSON 文件（交换/备份）',
+      label: 'JSON 文件（备份）',
       detail: handle ? handle.name : '（未选择文件）',
       available: supported,
       handleName: function () { return handle ? handle.name : ''; },
@@ -565,11 +560,11 @@
         var picker = mode === 'save'
           ? global.showSaveFilePicker({
             suggestedName: 'girls_dict.json',
-            types: [{ description: 'girls_dict 交换格式', accept: { 'application/json': ['.json'] } }],
+            types: [{ description: 'girls_dict JSON', accept: { 'application/json': ['.json'] } }],
           })
           : global.showOpenFilePicker({
             multiple: false,
-            types: [{ description: 'girls_dict 交换格式', accept: { 'application/json': ['.json'] } }],
+            types: [{ description: 'girls_dict JSON', accept: { 'application/json': ['.json'] } }],
           });
         return picker.then(function (result) {
           handle = mode === 'save' ? result : result[0];
@@ -607,25 +602,6 @@
     return adapter;
   }
 
-  /* ------------------------------------------------------------------ *
-   * 旧版 localStorage 数据（只读，用于一次性迁移到 IndexedDB）
-   * ------------------------------------------------------------------ */
-  function readLegacyLocalStorage() {
-    var payload = lsGet('localDb', null);
-    if (!payload || !payload.db) return null;
-    var chapters = (payload.db.chapters || []).length;
-    var panels = (payload.db.chapters || []).reduce(function (sum, chapter) {
-      return sum + (chapter.panels || []).length;
-    }, 0);
-    if (!chapters) return null;
-    return {
-      db: model.normalizeDb(payload.db).db,
-      revision: Number(payload.revision || 0),
-      chapters: chapters,
-      panels: panels,
-    };
-  }
-
   var module = {
     ConflictError: ConflictError,
     createHttpAdapter: createHttpAdapter,
@@ -637,12 +613,11 @@
     lsGet: lsGet,
     lsSet: lsSet,
     defaultHttpBase: defaultHttpBase,
-    readLegacyLocalStorage: readLegacyLocalStorage,
     /** 可选的数据源顺序：服务 > 浏览器数据库 > JSON 文件 */
     availableKinds: function () { return ['http', 'idb', 'file']; },
     create: function (kind, options) {
       if (kind === 'http') return createHttpAdapter(options && options.base);
-      if (kind === 'idb' || kind === 'local') return createIndexedDbAdapter();
+      if (kind === 'idb') return createIndexedDbAdapter();
       return createFileAdapter();
     },
   };

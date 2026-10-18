@@ -1,15 +1,1 @@
-{
-  "schema": "girls_dict",
-  "schemaVersion": 1,
-  "no": 33,
-  "title": "须藤同学",
-  "note": "",
-  "panelCount": 1,
-  "appearances": 0,
-  "characters": [],
-  "panels": [
-    {
-      "chars": []
-    }
-  ]
-}
+{"schema": "girls_dict", "schemaVersion": 1, "no": 33, "title": "须藤同学", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "panels": [{"chars": []}]}

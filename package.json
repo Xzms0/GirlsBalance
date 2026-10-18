@@ -2,9 +2,14 @@
   "name": "girls-dict",
   "version": "2.0.0",
   "private": true,
-  "description": "超超你的字典 · 记录漫画每一话每个分镜里出场角色编号的本地工具",
+  "description": "超超你的小站 · 漫画分镜角色出场记录与公开统计",
   "keywords": ["manga", "panel", "character", "sqlite", "local-first"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xzms0/GirlsBalance.git"
+  },
+  "homepage": "https://xzms0.github.io/GirlsBalance/",
   "engines": {
     "node": ">=22.5"
   },

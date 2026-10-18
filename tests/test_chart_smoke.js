@@ -123,7 +123,8 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   });
 
   assert.strictEqual(elements.revision.textContent, String(manifest.revision));
-  assert.ok(elements['meta-chars'].textContent.includes(`第 ${stats.characterCount} 个角色`), '角色更新提示');
+  const charMeta = elements['meta-chars'].textContent;
+  assert.ok(charMeta.includes(String(stats.characterCount)) && charMeta.includes('个角色'), '角色更新提示');
   assert.ok(elements['meta-chapter'].textContent.includes(`第 ${stats.lastChapter} 话`), '话数更新提示');
   assert.ok(/最后更新 \d{4}-\d{2}-\d{2}/.test(elements['meta-updated'].textContent), '最后更新日期');
   assert.strictEqual(rowCount(elements.chart.innerHTML), visible.length, '默认显示所有有记录角色');

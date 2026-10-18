@@ -428,13 +428,13 @@ test('数据视图有三种数据源与导入导出按钮', () => {
   store.patch({ view: 'data' });
   ui.render();
   const html = doc.getElementById('view-data').innerHTML;
-  ['本地服务（SQLite，推荐）', '浏览器数据库（IndexedDB）', 'JSON 文件（交换/备份）'].forEach((label) => {
+  ['本地服务（SQLite，推荐）', '浏览器数据库（IndexedDB）', 'JSON 文件（备份）'].forEach((label) => {
     assert.ok(html.includes(label), '缺少数据源：' + label);
   });
-  ['export-json', 'export-csv', 'export-md', 'import-json', 'backup-now', 'clear-all'].forEach((act) => {
+  ['export-json', 'export-csv', 'import-json', 'backup-now', 'clear-all'].forEach((act) => {
     assert.ok(html.includes('data-act="' + act + '"'), '缺少按钮：' + act);
   });
-  assert.ok(html.includes('导出 JSON（不含 id）'), '导出按钮应写明不含 id');
+  assert.ok(html.includes('导出 JSON'), '导出按钮');
   store.patch({ view: 'entry' });
 });
 
@@ -672,7 +672,7 @@ async function appPhase() {
     assert.strictEqual(JSON.stringify(appStore.state.db.chapters), before, '读回的内容应与保存的一致');
   });
 
-  await test('导出的交换格式不含任何 id', async () => {
+  await test('导出的 JSON 不含内部 id', async () => {
     const text = JSON.stringify(appEnv.GD.model.toExportDocument(appStore.state.db));
     assert.ok(!text.includes('"id"'), '不应出现 id');
     assert.ok(!text.includes('pn-') && !text.includes('ch-'), '不应出现内部 id 值');

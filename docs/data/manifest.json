@@ -3,19 +3,9 @@
   "schemaVersion": 1,
   "formatVersion": 2,
   "revision": 6642,
-  "exportedAt": "2026-10-18T10:38:45+00:00",
+  "exportedAt": "2026-10-18T13:22:04+00:00",
   "title": "超超你的字典",
   "author": "Xzer0",
-  "counts": {
-    "chapters": 41,
-    "panels": 2855,
-    "appearances": 5305,
-    "characters": 9,
-    "charMin": 0,
-    "charMax": 100
-  },
-  "files": {
-    "stats": "stats.json",
-    "chapters": "chapters/index.json"
-  }
+  "counts": {"chapters": 41, "panels": 2855, "appearances": 5305, "characters": 9, "charMin": 0, "charMax": 100},
+  "files": {"stats": "stats.json", "chapters": "chapters/index.json"}
 }

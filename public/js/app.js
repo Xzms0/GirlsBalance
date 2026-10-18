@@ -66,21 +66,16 @@
     var name;
     var mime;
     if (format === 'csv') {
-      text = model.toCsv(db);
+      text = '\ufeff' + model.toCsv(db);
       name = 'girls_dict.csv';
       mime = 'text/csv';
-    } else if (format === 'md') {
-      text = model.toMarkdown(db);
-      name = 'girls_dict.md';
-      mime = 'text/markdown';
     } else {
-      // 交换格式：不含任何内部 id
-      text = JSON.stringify(model.toExportDocument(db), null, 2) + '\n';
+      text = model.prettyJson(model.toExportDocument(db));
       name = 'girls_dict.json';
       mime = 'application/json';
     }
     adapters.download(name, text, mime);
-    ui.toast('已导出 ' + name + (format === 'json' ? '（不含 id）' : ''), 'ok');
+    ui.toast('已导出 ' + name, 'ok');
   }
 
   function importJsonText(text) {
@@ -135,9 +130,9 @@
         '<ul class="help-list">',
         '<li><b>本地服务（推荐）</b>：数据库是 <code>data/girls_dict.sqlite3</code>，' +
         '改一个编号只写一行，数据多了也不会整份重写；写入前自动留快照，还能用 SQL 查询。</li>',
-        '<li><b>浏览器数据库</b>：不装任何东西也能用，数据存在浏览器自带的 IndexedDB 里（容量按硬盘走）。</li>',
-        '<li><b>JSON 文件</b>：整份读写的交换格式，适合和别的程序交换或做备份，数据量大时不如前两种。</li>',
-        '<li>导出的 JSON <b>不含内部 id</b>，只有话号、标题、备注和每个槽位的角色编号。</li>',
+        '<li><b>浏览器数据库</b>：不装任何东西也能用，数据存在浏览器自带的 IndexedDB 里。</li>',
+        '<li><b>JSON 文件</b>：适合备份/恢复，数据量大时不如前两种。</li>',
+        '<li>导出的 JSON 包含话号、标题、备注和每个槽位的角色编号。</li>',
         '</ul>',
         '<h4>发布到公开站</h4>',
         '<ul class="help-list">',
@@ -365,11 +360,10 @@
       /* 导入导出 */
       case 'export-json': return exportData('json');
       case 'export-csv': return exportData('csv');
-      case 'export-md': return exportData('md');
       case 'export-sqlite':
         if (state.adapter.exportDownload) {
           state.adapter.exportDownload('sqlite');
-          ui.toast('正在下载 SQLite 数据库文件（含内部 id，可直接用 sqlite3 打开）', 'ok', 3600);
+          ui.toast('正在下载 SQLite 数据库文件', 'ok', 3600);
         }
         return;
       case 'import-json':
@@ -377,8 +371,8 @@
         return;
       case 'copy-json':
         if (global.navigator.clipboard) {
-          global.navigator.clipboard.writeText(JSON.stringify(model.toExportDocument(state.db), null, 2))
-            .then(function () { ui.toast('交换格式 JSON 已复制到剪贴板（不含 id）', 'ok'); })
+          global.navigator.clipboard.writeText(model.prettyJson(model.toExportDocument(state.db)))
+            .then(function () { ui.toast('JSON 已复制到剪贴板', 'ok'); })
             .catch(function (error) { ui.toast('复制失败：' + error.message, 'error'); });
         } else {
           ui.toast('当前浏览器不支持剪贴板写入，请用导出 JSON', 'warn');
@@ -405,16 +399,6 @@
             }).join('')
             : '<p class="muted small">暂无改动记录。</p>';
         }).catch(function (error) { ui.toast(error.message, 'error'); });
-      case 'load-raw':
-        return state.adapter.raw().then(function (text) {
-          document.getElementById('raw-view').textContent = text || '（空）';
-        }).catch(function (error) { ui.toast(error.message, 'error'); });
-      case 'validate': {
-        var issues = model.validateDb(state.db);
-        if (!issues.length) ui.toast('数据完全合法 ✅', 'ok');
-        else ui.toast('发现 ' + issues.length + ' 处问题（保存时会自动修正）', 'warn');
-        return;
-      }
       case 'clear-all':
         ui.confirm('清空全部数据？', '所有话、槽位和角色名都会被删除（可用 Ctrl+Z 撤销）。', '清空', 'danger')
           .then(function (ok) { if (ok) { store.actions.clearAll(); ui.toast('已清空', 'info'); } });
@@ -770,10 +754,6 @@
     store.boot().then(function () {
       ui.render();
       var state = store.state;
-      if (state.legacyMigration) {
-        ui.toast('已把旧版浏览器缓存里的数据迁移到 IndexedDB：' + state.legacyMigration.chapters +
-          ' 话 / ' + state.legacyMigration.panels + ' 槽位', 'ok', 5200);
-      }
       if (state.adapterKind === 'idb' && !state.db.chapters.length) {
         ui.toast('欢迎使用超超你的字典：先「+ 新建一话」，再给它加槽位', 'info', 4200);
       }

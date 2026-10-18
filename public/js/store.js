@@ -23,7 +23,6 @@
     adapterKind: 'idb',
     adapter: null,
     storage: { ok: false, canWrite: false, detail: '未连接' },
-    legacyMigration: null,
 
     status: 'idle',           // idle | loading | dirty | saving | saved | error | conflict
     statusMessage: '未连接数据源',
@@ -229,37 +228,14 @@
     });
   }
 
-  /** 把旧版「浏览器缓存（localStorage）」里的数据搬进 IndexedDB（原键保留不删）。 */
-  function migrateLegacyLocalStorage() {
-    if (state.adapterKind !== 'idb' || !state.ready) return Promise.resolve(null);
-    if ((state.db.chapters || []).length) return Promise.resolve(null);
-    var legacy = adapters.readLegacyLocalStorage();
-    if (!legacy) return Promise.resolve(null);
-    // 直接替换内存里的文档：与「空库」的指纹一比，自然会产生 chapter.upsert 系列补丁
-    // （带 id，服务端会原样保留），不需要退回整库替换。
-    state.db = legacy.db;
-    state.issues = [];
-    state.legacyMigration = { chapters: legacy.chapters, panels: legacy.panels };
-    scheduleSave();
-    return saveNow(false).then(function (ok) {
-      if (!ok) { state.legacyMigration = null; return null; }
-      return state.legacyMigration;
-    });
-  }
-
   /** 启动：优先用上次的选择，其次按当前地址猜测（服务 > 浏览器数据库 > JSON 文件）。 */
   function boot() {
     var preferred = adapters.lsGet('adapterKind', null);
-    var protocol = global.location.protocol;
     var order = ['http', 'idb', 'file'];
-    var candidates;
-    if (preferred) {
-      candidates = [preferred].concat(order.filter(function (kind) { return kind !== preferred; }));
-    } else if (protocol === 'http:' || protocol === 'https:') {
-      candidates = order;
-    } else {
-      candidates = order;
-    }
+    if (preferred && order.indexOf(preferred) < 0) preferred = null;
+    var candidates = preferred
+      ? [preferred].concat(order.filter(function (kind) { return kind !== preferred; }))
+      : order;
     var index = 0;
     function tryNext() {
       if (index >= candidates.length) return useAdapter('idb');
@@ -275,7 +251,7 @@
         return loadFromAdapter().then(function (ok) {
           if (!ok) return tryNext();
           adapters.lsSet('adapterKind', kind);
-          return migrateLegacyLocalStorage();
+          return null;
         });
       }).catch(function () { return tryNext(); });
     }
@@ -457,7 +433,6 @@
     loadFromAdapter: loadFromAdapter,
     useAdapter: useAdapter,
     refreshStorageStatus: refreshStorageStatus,
-    migrateLegacyLocalStorage: migrateLegacyLocalStorage,
     boot: boot,
     setFocusSnapshot: function (snapshot) { focusSnapshot = snapshot; },
     getFocusSnapshot: function () { return focusSnapshot; },

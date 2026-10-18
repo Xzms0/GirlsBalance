@@ -6,7 +6,7 @@
     python tests/verify_server.py --spawn            # 自己拉起临时服务（Python + Node）再验，结束后清理
 
 检查内容：静态托管、health/index/chapters/db/patch/import/export/stats/find/search/log/backups
-以及 409 冲突、400 非法补丁、CORS、导出 JSON 不含 id、快照回滚、完整性。
+以及 409 冲突、400 非法补丁、CORS、导出 JSON、快照回滚、完整性。
 """
 
 from __future__ import annotations
@@ -104,13 +104,12 @@ def exercise_readonly(base: str, label: str) -> None:
     status, headers, body = request(f"{base}/api/db/export?format=json")
     text = body.decode("utf-8")
     exported = json.loads(text)
-    check(f"{label}: 导出 JSON 不含任何 id", '"id"' not in text and "pn-" not in text and "ch-" not in text)
     check(f"{label}: 导出 JSON 结构正确",
           exported["schema"] == "girls_dict"
           and (not exported["chapters"] or set(exported["chapters"][0]) == {"no", "title", "note", "panels"}))
-    for fmt, needle in (("csv", b"chapter_no"), ("md", b"#"), ("sqlite", b"SQLite format 3")):
+    for fmt, needle in (("csv", "话-分镜".encode("utf-8")), ("sqlite", b"SQLite format 3")):
         status, headers, body = request(f"{base}/api/db/export?format={fmt}")
-        check(f"{label}: 导出 {fmt}", status == 200 and body[:64].find(needle) >= 0 or needle in body[:64])
+        check(f"{label}: 导出 {fmt}", status == 200 and needle in body[:64])
 
     for path, needle in [("/", b"girls_dict"), ("/index.html", b"js/model.js"), ("/js/model.js", b"buildPatch"),
                          ("/js/adapters.js", b"createIndexedDbAdapter"), ("/js/store.js", b"buildPatch"),

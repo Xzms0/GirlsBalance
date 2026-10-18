@@ -10,7 +10,7 @@
     python tools/gd.py sql "SELECT no, title FROM chapter ORDER BY no LIMIT 5"
     python tools/gd.py find 12                       # 角色 12 出现在哪
     python tools/gd.py export --format csv -o out.csv
-    python tools/gd.py export --format json          # 不含内部 id 的交换格式
+    python tools/gd.py export --format json          # 导出 JSON
     python tools/gd.py add-chapter --title "番外" --panels 3
     python tools/gd.py set 1 2 3 7 9                 # 第 1 话第 2 个槽位 = 角色 3/7/9
     python tools/gd.py swap 1 3                      # 对换第 1、3 话并修正编号
@@ -72,8 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_sql.add_argument("query")
     p_sql.add_argument("--limit", type=int, default=200)
 
-    p_export = sub.add_parser("export", help="导出 json / csv / md")
-    p_export.add_argument("--format", default="json", choices=["json", "csv", "md"])
+    p_export = sub.add_parser("export", help="导出 json / csv")
+    p_export.add_argument("--format", default="json", choices=["json", "csv"])
     p_export.add_argument("-o", "--out", default="", help="输出文件；不填则打印到标准输出")
 
     p_find = sub.add_parser("find", help="查找某个角色出现在哪些话/槽位")
@@ -208,8 +208,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     if command == "export":
         if args.format == "csv":
             text = database.export_csv()
-        elif args.format == "md":
-            text = database.export_markdown()
         else:
             text = database.export_json()
         if args.out:

@@ -106,6 +106,12 @@ class SitePublishTest(unittest.TestCase):
             self.assertAlmostEqual(by_char[char]["points"], round(total["points"], 1), places=1)
             self.assertAlmostEqual(by_char[char]["weighted"], round(total["weighted"], 1), places=1)
 
+    def test_payload_is_compact(self) -> None:
+        chapter = self.payload["chapters/0001.json"]
+        self.assertIn('"chars": [1, 2, 5]', chapter)
+        self.assertNotIn('"chars": [\n', chapter)
+        self.assertLess(len(chapter.splitlines()), 20)
+
     def test_write_payload_cleans_stale_chapters(self) -> None:
         work = ROOT / ".tmp-test-run" / uuid.uuid4().hex
         work.mkdir(parents=True)

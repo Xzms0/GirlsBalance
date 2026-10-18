@@ -1,15 +1,1 @@
-{
-  "schema": "girls_dict",
-  "schemaVersion": 1,
-  "no": 37,
-  "title": "喜欢喜欢最喜欢❤",
-  "note": "",
-  "panelCount": 1,
-  "appearances": 0,
-  "characters": [],
-  "panels": [
-    {
-      "chars": []
-    }
-  ]
-}
+{"schema": "girls_dict", "schemaVersion": 1, "no": 37, "title": "喜欢喜欢最喜欢❤", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "panels": [{"chars": []}]}

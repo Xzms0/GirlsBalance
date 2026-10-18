@@ -345,13 +345,19 @@ class TestExport(TempDirCase):
             self.assertEqual(a["title"], b["title"])
             self.assertEqual([p["chars"] for p in a["panels"]], [p["chars"] for p in b["panels"]])
 
-    def test_csv_and_markdown(self) -> None:
+    def test_csv_matrix(self) -> None:
         csv_text = self.database.export_csv()
-        self.assertTrue(csv_text.startswith("chapter_no,chapter_title,panel_index,char,char_name"))
-        self.assertEqual(len(csv_text.strip().splitlines()), 24)
-        md = self.database.export_markdown()
-        self.assertIn("## 第 2 话 放学后", md)
-        self.assertIn("| 2 | 1、2、5 |", md)
+        rows = [line for line in csv_text.split("\r\n") if line]
+        self.assertEqual(len(rows), 11)  # 表头 + 10 个分镜
+        header = rows[0].split(",")
+        self.assertEqual(header[0], "话-分镜")
+        self.assertEqual(header[1:], [str(char) for char in range(0, 101)])
+        self.assertEqual(rows[1].split(",")[0], "1-1")
+        first = rows[1].split(",")
+        self.assertEqual(first[1 + 1], "1")  # 角色 1
+        self.assertEqual(first[1 + 5], "1")  # 角色 5
+        self.assertEqual(first[1 + 2], "0")
+        self.assertNotIn("相遇", csv_text)
 
     def test_strip_ids_helper(self) -> None:
         document = self.database.load_document()

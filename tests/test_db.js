@@ -605,7 +605,7 @@ test('导出 → 导入（对象）往返后内容一致', () => {
   assert.strictEqual(after.meta.title, before.meta.title);
   // 对象导入与文件导入写回的信息一致：title 和 author 都要落库
   assert.strictEqual(after.meta.author, before.meta.author);
-  // 内部 id 是新生成的（交换格式里没有 id）
+  // 内部 id 是新生成的（导出格式里没有 id）
   assert.notStrictEqual(after.chapters[0].id, before.chapters[0].id);
   assert.strictEqual(JSON.stringify(exported).includes('"id"'), false);
 });
@@ -628,37 +628,31 @@ test('importJson 也能吃 JSON 文本解析出来的对象，并重排编号', 
   assert.strictEqual(document.meta.title, '手工数据');
 });
 
-test('exportCsv 形状：表头、行结束符、角色名、转义', () => {
+test('exportCsv 是 0/1 矩阵：话-分镜 × 0..100', () => {
   const database = freshDatabase('csv');
   database.replaceAll(readSample());
   const csv = database.exportCsv();
-  assert.ok(csv.startsWith('chapter_no,chapter_title,panel_index,char,char_name\r\n'));
-  assert.ok(csv.endsWith('\r\n'));
-  assert.ok(csv.includes('1,相遇,1,1,超超\r\n'));
-  assert.ok(csv.includes('3,雨天,2,100,彩蛋角色\r\n'));
-  assert.ok(!csv.includes('\n\n'));
-  assert.strictEqual(csv.split('\r\n').length, 23 + 2, '23 行数据 + 表头 + 结尾空段');
-
-  const quoted = freshDatabase('csv-quote');
-  quoted.importJson({ meta: { charNames: {} }, chapters: [{ title: '带,逗号"引号', panels: [{ chars: [1] }] }] });
-  assert.ok(quoted.exportCsv().includes('"带,逗号""引号"'), '含分隔符/引号的字段要转义');
+  const rows = csv.split('\r\n').filter(Boolean);
+  assert.strictEqual(rows.length, 11, '表头 + 10 个分镜');
+  const header = rows[0].split(',');
+  assert.strictEqual(header[0], '话-分镜');
+  assert.strictEqual(header.length, 102);
+  assert.deepStrictEqual(header.slice(1), Array.from({ length: 101 }, (unused, index) => String(index)));
+  const first = rows[1].split(',');
+  assert.strictEqual(first[0], '1-1');
+  assert.strictEqual(first[1 + 1], '1');
+  assert.strictEqual(first[1 + 5], '1');
+  assert.strictEqual(first[1 + 2], '0');
+  assert.ok(!csv.includes('相遇'), 'CSV 不包含标题信息');
 });
 
-test('exportMarkdown 形状：标题、统计行、备注、表格', () => {
-  const database = freshDatabase('markdown');
+test('exportJson 使用紧凑格式，数组不逐项换行', () => {
+  const database = freshDatabase('json-pretty');
   database.replaceAll(readSample());
-  const md = database.exportMarkdown();
-  const lines = md.split('\n');
-  assert.strictEqual(lines[0], '# 超超你的字典 · 示例');
-  assert.ok(md.includes('- 话数：3　槽位数：10　出现角色数：6　出场次数：23'));
-  assert.ok(md.includes('## 第 2 话 放学后'));
-  assert.ok(md.includes('> 这一话开始出现会长'));
-  assert.ok(md.includes('| 槽位 | 角色编号 |') && md.includes('| --- | --- |'));
-  assert.ok(md.includes('| 1 | 1、5 |'));
-  assert.ok(md.includes('| 4 | 1、2、5、23 |'));
-  const empty = freshDatabase('markdown-empty');
-  empty.importJson({ chapters: [{ title: '空的', panels: [] }] });
-  assert.ok(empty.exportMarkdown().includes('_（暂无分镜）_'));
+  const text = database.exportJson();
+  assert.ok(text.includes('"chars": [1, 5]') || text.includes('{"chars":[1,5]}'));
+  assert.ok(!/"chars": \[\r?\n/.test(text), 'chars 数组不应逐个换行');
+  assert.strictEqual(JSON.parse(text).chapters.length, 3);
 });
 
 /* --------------------------------------------------------------------------- *
@@ -866,7 +860,7 @@ test('normalizeDocument 修好乱七八糟的输入', () => {
   assert.strictEqual(new Set(ids).size, 3);
 });
 
-test('stripIds 只留交换格式', () => {
+test('stripIds 只留导出字段', () => {
   const document = db.normalizeDocument(readSample());
   const stripped = db.stripIds(document);
   assert.strictEqual(JSON.stringify(stripped).includes('"id"'), false);

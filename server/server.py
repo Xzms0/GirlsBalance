@@ -291,16 +291,12 @@ class Handler(BaseHTTPRequestHandler):
             document = database.load_document()
             return self._json(200, {"ok": True, "revision": document["revision"], "db": document})
         if path == "/api/db/raw":
-            # 数据库本体现在是 SQLite；这里给的是「交换格式」JSON 文本（不含 id）
             return self._send(200, database.export_json().encode("utf-8"), "application/json; charset=utf-8")
         if path == "/api/db/export":
             fmt = (query.get("format") or ["json"])[0].lower()
             if fmt == "csv":
                 return self._download(database.export_csv().encode("utf-8-sig"), "girls_dict.csv",
                                       "text/csv; charset=utf-8")
-            if fmt in ("md", "markdown"):
-                return self._download(database.export_markdown().encode("utf-8"), "girls_dict.md",
-                                      "text/markdown; charset=utf-8")
             if fmt in ("sqlite", "sqlite3", "db"):
                 blob = database.path.read_bytes() if database.exists() else b""
                 return self._download(blob, "girls_dict.sqlite3", "application/vnd.sqlite3")
@@ -388,8 +384,8 @@ ENDPOINTS = [
     {"method": "POST", "path": "/api/db/import", "desc": "从 JSON 文件或对象导入；body={path} 或 {db}"},
     {"method": "POST", "path": "/api/db/clear", "desc": "清空所有数据"},
     {"method": "POST", "path": "/api/db/validate", "desc": "只校验不写入"},
-    {"method": "GET", "path": "/api/db/export?format=json|csv|md|sqlite", "desc": "导出（JSON 不含 id）"},
-    {"method": "GET", "path": "/api/db/raw", "desc": "交换格式 JSON 文本"},
+    {"method": "GET", "path": "/api/db/export?format=json|csv|sqlite", "desc": "导出 JSON / CSV / SQLite"},
+    {"method": "GET", "path": "/api/db/raw", "desc": "JSON 文本"},
     {"method": "GET", "path": "/api/stats", "desc": "角色出场次数等派生统计"},
     {"method": "GET", "path": "/api/find?char=12", "desc": "某个角色出现在哪些话/槽位"},
     {"method": "GET", "path": "/api/search?q=文字", "desc": "按标题/备注/角色名搜索"},

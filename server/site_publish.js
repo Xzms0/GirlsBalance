@@ -14,6 +14,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const db = require('./db.js');
+const pretty = require('./json_pretty.js');
 
 const SITE_DIR = 'docs';
 const DATA_DIR = path.join(SITE_DIR, 'data');
@@ -33,7 +34,7 @@ class PublishError extends Error {
 }
 
 function json(value) {
-  return `${JSON.stringify(value, null, 2)}\n`;
+  return pretty.stringify(value);
 }
 
 function short(text) {

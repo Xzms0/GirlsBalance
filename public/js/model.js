@@ -321,34 +321,56 @@
   }
 
   function toCsv(db) {
-    var escape = function (value) {
-      var text = value === null || value === undefined ? '' : String(value);
-      return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
-    };
-    var lines = ['chapter_no,chapter_title,panel_index,char,char_name'];
-    flatRows(db).forEach(function (row) {
-      lines.push([row.chapter_no, row.chapter_title, row.panel_index, row.char, row.char_name].map(escape).join(','));
+    var columns = [];
+    for (var char = CHAR_MIN; char <= CHAR_MAX; char += 1) columns.push(char);
+    var lines = ['话-分镜,' + columns.join(',')];
+    (db.chapters || []).forEach(function (chapter) {
+      (chapter.panels || []).forEach(function (panel, index) {
+        var present = {};
+        (panel.chars || []).forEach(function (item) { present[item] = true; });
+        lines.push((chapter.no + '-' + (index + 1)) + ',' + columns.map(function (item) {
+          return present[item] ? 1 : 0;
+        }).join(','));
+      });
     });
-    return lines.join('\n') + '\n';
+    return lines.join('\r\n') + '\r\n';
   }
 
-  function toMarkdown(db) {
-    var stats = computeStats(db);
-    var out = ['# ' + (((db.meta || {}).title) || '超超你的字典'), ''];
-    out.push('- 话数：' + stats.chapters + '　槽位数：' + stats.panels +
-      '　出现角色数：' + stats.distinct_chars + '　出场次数：' + stats.appearances, '');
-    (db.chapters || []).forEach(function (chapter) {
-      out.push('## 第 ' + chapter.no + ' 话' + (chapter.title ? ' ' + chapter.title : ''), '');
-      if (chapter.note) out.push('> ' + chapter.note, '');
-      var panels = chapter.panels || [];
-      if (!panels.length) { out.push('_（暂无分镜）_', ''); return; }
-      out.push('| 槽位 | 角色编号 |', '| --- | --- |');
-      panels.forEach(function (panel, index) {
-        out.push('| ' + (index + 1) + ' | ' + ((panel.chars || []).join('、') || '—') + ' |');
-      });
-      out.push('');
-    });
-    return out.join('\n');
+  /* 紧凑 JSON：数组和小分镜对象保持一行，避免每个编号占一行。 */
+  var JSON_MAX_INLINE = 200;
+
+  function compactJson(value) {
+    return JSON.stringify(value);
+  }
+
+  function formatJson(value, level) {
+    var indent = new Array(level + 1).join('  ');
+    var child = new Array(level + 2).join('  ');
+    if (Array.isArray(value)) {
+      if (!value.length) return '[]';
+      if (value.every(function (item) { return item === null || typeof item !== 'object'; })) {
+        return '[' + value.map(compactJson).join(', ') + ']';
+      }
+      var inline = compactJson(value);
+      if (inline && inline.length <= JSON_MAX_INLINE) return inline;
+      return '[\n' + value.map(function (item) {
+        return child + formatJson(item, level + 1);
+      }).join(',\n') + '\n' + indent + ']';
+    }
+    if (value && typeof value === 'object') {
+      var keys = Object.keys(value);
+      if (!keys.length) return '{}';
+      var objectInline = compactJson(value);
+      if (objectInline && objectInline.length <= JSON_MAX_INLINE) return objectInline;
+      return '{\n' + keys.map(function (key) {
+        return child + JSON.stringify(key) + ': ' + formatJson(value[key], level + 1);
+      }).join(',\n') + '\n' + indent + '}';
+    }
+    return compactJson(value);
+  }
+
+  function prettyJson(value) {
+    return formatJson(value, 0) + '\n';
   }
 
   function clone(db) {
@@ -473,7 +495,7 @@
     return { ops: ops, saved: next, empty: ops.length === 0 };
   }
 
-  /** 交换格式：不含任何内部 id，可长期保存/交给别的程序。 */
+  /** 导出格式：话、标题、备注和每个槽位的角色编号。 */
   function toExportDocument(db) {
     return {
       schema: SCHEMA_NAME,
@@ -530,7 +552,7 @@
     computeStats: computeStats,
     flatRows: flatRows,
     toCsv: toCsv,
-    toMarkdown: toMarkdown,
+    prettyJson: prettyJson,
     clone: clone,
     fingerprints: fingerprints,
     buildPatch: buildPatch,

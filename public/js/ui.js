@@ -448,9 +448,9 @@
       { kind: 'http', title: '本地服务（SQLite，推荐）',
         desc: '数据库是 data/girls_dict.sqlite3。改一个编号只写一行，数据再多也不会整份重写；支持自动快照与 SQL 查询。' },
       { kind: 'idb', title: '浏览器数据库（IndexedDB）',
-        desc: '不用装任何东西，浏览器自带数据库，每个话一条记录、改哪条写哪条，容量按硬盘走（不再是 5MB 的 localStorage）。' },
-      { kind: 'file', title: 'JSON 文件（交换/备份）',
-        desc: '直接读写一个 .json 文件，方便和别的程序交换；每次保存都会整份重写，数据量大时不如前两种。' },
+        desc: '不用装任何东西，浏览器自带数据库，每个话一条记录、改哪条写哪条。' },
+      { kind: 'file', title: 'JSON 文件（备份）',
+        desc: '直接读写一个 .json 文件，适合备份/恢复；每次保存都会整份重写，数据量大时不如前两种。' },
     ];
     var current = state.adapter || { label: '未连接', detail: '' };
     var info = (state.storage && state.storage.info) || {};
@@ -465,16 +465,6 @@
         '<span>内容</span><b>' + info.chapters + ' 话 / ' + info.panels + ' 槽位</b>' +
         '<span>备份目录</span><b>' + esc(info.backupDir) + '</b>' +
         '</div>');
-    }
-    if (info.migration && info.migration.ok) {
-      lines.push('<p class="warn-text small">已自动迁移旧版 JSON：' + esc(info.migration.source) +
-        '（' + info.migration.chapters + ' 话 / ' + info.migration.panels + ' 槽位）' +
-        (info.migration.archived ? '，原文件已归档到 ' + esc(info.migration.archived) : '') + '</p>');
-    }
-    if (state.legacyMigration) {
-      lines.push('<p class="warn-text small">已把旧版浏览器缓存里的数据迁移到 IndexedDB：' +
-        state.legacyMigration.chapters + ' 话 / ' + state.legacyMigration.panels + ' 槽位' +
-        '（原来的 localStorage 数据保留未删，确认无误后可自行清理）</p>');
     }
     lines.push('<div class="adapter-grid">' + kinds.map(function (item) {
       var supported = adapters.create(item.kind).available();
@@ -502,12 +492,10 @@
     return [
       '<section class="card">',
       '<h3>导出 / 导入</h3>',
-      '<p class="muted small">导出的 JSON 是<b>交换格式：不含任何内部 id</b>，可以直接被别的程序读写；' +
-      '导入时既接受这种格式，也接受旧版带 id 的 JSON（id 会被忽略并重新生成）。</p>',
+      '<p class="muted small">导出的 JSON 包含话、标题、备注和每个槽位的角色编号；导入会整库替换当前数据。</p>',
       '<div class="row">',
-      '<button class="btn" data-act="export-json" data-nofocus="1">导出 JSON（不含 id）</button>',
+      '<button class="btn" data-act="export-json" data-nofocus="1">导出 JSON</button>',
       '<button class="btn" data-act="export-csv" data-nofocus="1">导出 CSV</button>',
-      '<button class="btn" data-act="export-md" data-nofocus="1">导出 Markdown</button>',
       (state.adapterKind === 'http'
         ? '<button class="btn" data-act="export-sqlite" data-nofocus="1">下载 SQLite 数据库</button>' : ''),
       '<button class="btn" data-act="import-json" data-nofocus="1">导入 JSON（整库替换）</button>',
@@ -533,14 +521,6 @@
       '<button class="btn tiny" data-act="load-log" data-nofocus="1">最近改动</button></div>',
       '<div id="backup-list" class="backup-list"><p class="muted small">点“刷新列表”查看快照。</p></div>',
       '</section>',
-      '<section class="card">',
-      '<h3>交换格式 JSON</h3>',
-      '<div class="row">',
-      '<button class="btn tiny" data-act="load-raw" data-nofocus="1">预览当前数据（交换格式）</button>',
-      '<button class="btn tiny" data-act="validate" data-nofocus="1">校验当前数据</button>',
-      '</div>',
-      '<pre id="raw-view" class="raw-view">（未读取）</pre>',
-      '</section>',
       '<section class="card danger-zone">',
       '<h3>危险操作</h3>',
       '<div class="row"><button class="btn danger" data-act="clear-all" data-nofocus="1">清空全部数据</button></div>',
@@ -550,8 +530,7 @@
 
   function renderData(state) {
     return '<div class="view-head"><h2>数据与存储</h2>' +
-      '<p class="muted small">数据现在存在 SQLite 数据库（或浏览器自带的 IndexedDB）里：' +
-      '改一个编号只写一行，而不是把整本书重写一遍。JSON 变成导入/导出用的交换格式，且不含内部 id。</p></div>' +
+      '<p class="muted small">数据存在 SQLite（或浏览器 IndexedDB）里；JSON 用于导入、导出和备份。</p></div>' +
       renderStorageCard(state) + renderDataCard(state);
   }
 

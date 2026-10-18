@@ -1,15 +1,1 @@
-{
-  "schema": "girls_dict",
-  "schemaVersion": 1,
-  "no": 34,
-  "title": "恋太郎教练的热血爱指导",
-  "note": "",
-  "panelCount": 1,
-  "appearances": 0,
-  "characters": [],
-  "panels": [
-    {
-      "chars": []
-    }
-  ]
-}
+{"schema": "girls_dict", "schemaVersion": 1, "no": 34, "title": "恋太郎教练的热血爱指导", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "panels": [{"chars": []}]}

@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from girls_db import CHAR_MAX, CHAR_MIN, EXPORT_VERSION, SCHEMA_NAME, GirlsDB, strip_ids
+from json_pretty import dumps as pretty_json
 
 SITE_FORMAT_VERSION = 2
 
@@ -45,11 +46,11 @@ class PublishError(Exception):
 # 生成分片 JSON
 # --------------------------------------------------------------------------- #
 def _json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+    return pretty_json(value)
 
 
 def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
-    """根据交换格式文档生成全部公开 JSON 文本。"""
+    """根据导出文档生成全部公开 JSON 文本。"""
     meta = document.get("meta") or {}
     names = {str(key): str(value) for key, value in (meta.get("charNames") or {}).items()}
     exported_at = str(document.get("exportedAt") or "")

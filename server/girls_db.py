@@ -12,7 +12,7 @@
 * 章节、槽位、角色编号、角色名都是独立的表，还带索引，可以只查一部分；
 * 事务 + WAL，断电不会写坏；快照用 ``VACUUM INTO``，秒级且一致；
 * 仍然是**一个本地文件**，零依赖（Python 自带 sqlite3），拷走就能用；
-* JSON 没有被抛弃 —— 它降级成「导入/导出用的交换格式」，导出的 JSON 不含内部 id。
+* JSON 没有被抛弃 —— 它用于导入/导出，导出的 JSON 不含内部 id。
 
 存储结构（也见 schema/girls_dict.sql）：
 
@@ -46,6 +46,8 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+
+from json_pretty import dumps as pretty_json
 
 SCHEMA_NAME = "girls_dict"
 STORAGE_VERSION = 2          # SQLite 存储结构版本
@@ -214,7 +216,7 @@ def normalize_document(raw: Any, issues: Optional[List[Dict[str, str]]] = None,
 
 
 def strip_ids(document: Dict[str, Any]) -> Dict[str, Any]:
-    """去掉 id，得到可长期保存 / 给别的程序用的交换格式。"""
+    """去掉内部 id，得到可长期保存 / 交给别的程序的导出格式。"""
     return {
         "schema": SCHEMA_NAME,
         "schemaVersion": EXPORT_VERSION,
@@ -1062,51 +1064,27 @@ class GirlsDB:
     # 导出
     # ------------------------------------------------------------------ #
     def export_document(self) -> Dict[str, Any]:
-        """交换格式：**不含 id**，可以长期保存或交给别的程序。"""
+        """导出格式：**不含内部 id**，可以长期保存或交给别的程序。"""
         return strip_ids(self.load_document())
 
-    def export_json(self, indent: int = 2) -> str:
-        return json.dumps(self.export_document(), ensure_ascii=False, indent=indent) + "\n"
+    def export_json(self) -> str:
+        return pretty_json(self.export_document())
 
     def export_csv(self) -> str:
+        """话-分镜 × 0..100 的 0/1 矩阵。"""
         document = self.load_document()
         buffer = io.StringIO()
-        writer = csv.DictWriter(
-            buffer, fieldnames=["chapter_no", "chapter_title", "panel_index", "char", "char_name"])
-        writer.writeheader()
-        names = document["meta"]["charNames"]
+        writer = csv.writer(buffer, lineterminator="\r\n")
+        columns = list(range(CHAR_MIN, CHAR_MAX + 1))
+        writer.writerow(["话-分镜"] + [str(char) for char in columns])
         for chapter in document["chapters"]:
             for index, panel in enumerate(chapter["panels"], start=1):
-                for char in panel["chars"]:
-                    writer.writerow({
-                        "chapter_no": chapter["no"], "chapter_title": chapter["title"],
-                        "panel_index": index, "char": char, "char_name": names.get(str(char), ""),
-                    })
+                chars = set(panel["chars"])
+                writer.writerow(
+                    [f"{chapter['no']}-{index}"] +
+                    [1 if char in chars else 0 for char in columns]
+                )
         return buffer.getvalue()
-
-    def export_markdown(self) -> str:
-        document = self.load_document()
-        stats = self.stats()
-        lines = [f"# {document['meta']['title'] or '超超你的字典'}", ""]
-        lines.append(f"- 话数：{stats['chapters']}　槽位数：{stats['panels']}　"
-                     f"出现角色数：{stats['distinct_chars']}　出场次数：{stats['appearances']}")
-        lines.append("")
-        for chapter in document["chapters"]:
-            head = f"## 第 {chapter['no']} 话"
-            if chapter["title"]:
-                head += f" {chapter['title']}"
-            lines.append(head)
-            if chapter["note"]:
-                lines += ["", f"> {chapter['note']}"]
-            lines.append("")
-            if not chapter["panels"]:
-                lines += ["_（暂无分镜）_", ""]
-                continue
-            lines += ["| 槽位 | 角色编号 |", "| --- | --- |"]
-            for index, panel in enumerate(chapter["panels"], start=1):
-                lines.append(f"| {index} | {'、'.join(str(c) for c in panel['chars']) or '—'} |")
-            lines.append("")
-        return "\n".join(lines)
 
     # ------------------------------------------------------------------ #
     # 备份 / 回滚 / 校验

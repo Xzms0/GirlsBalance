@@ -2,7 +2,7 @@
 /**
  * 前端数据模型（public/js/model.js）单元测试。
  *
- * 覆盖：编号清洗、输入解析、文档规范化、派生统计、导出格式（不含 id）、
+ * 覆盖：编号清洗、输入解析、文档规范化、派生统计、导出格式、
  * 增量补丁生成（保存时只发变化的部分）。
  *
  * 运行：node tests/test_model.js      （或 npm test）
@@ -154,18 +154,27 @@ test('拉平成行', () => {
   assert.strictEqual(rows.length, 23);
   sameRaw(rows[0], { chapter_no: 1, chapter_title: '相遇', panel_index: 1, char: 1, char_name: '超超' });
 });
-test('CSV 导出格式正确', () => {
+test('CSV 是 0/1 矩阵', () => {
   const csv = model.toCsv(fixture);
-  const lines = csv.trim().split('\n');
-  assert.strictEqual(lines[0], 'chapter_no,chapter_title,panel_index,char,char_name');
-  assert.strictEqual(lines.length, 24);
-  assert.ok(csv.includes('1,相遇,1,1,超超'));
+  const rows = csv.split('\r\n').filter(Boolean);
+  assert.strictEqual(rows.length, 11);
+  const header = rows[0].split(',');
+  assert.strictEqual(header[0], '话-分镜');
+  assert.strictEqual(header.length, 102);
+  assert.strictEqual(header[1], '0');
+  assert.strictEqual(header[101], '100');
+  const first = rows[1].split(',');
+  assert.strictEqual(first[0], '1-1');
+  assert.strictEqual(first[1 + 1], '1');
+  assert.strictEqual(first[1 + 5], '1');
+  assert.strictEqual(first[1 + 2], '0');
+  assert.ok(!csv.includes('相遇'));
 });
-test('Markdown 导出格式正确', () => {
-  const md = model.toMarkdown(fixture);
-  assert.ok(md.startsWith('# 超超你的字典 · 示例'));
-  assert.ok(md.includes('## 第 2 话 放学后'));
-  assert.ok(md.includes('| 2 | 1、2、5 |'));
+test('JSON 导出为紧凑格式', () => {
+  const text = model.prettyJson(model.toExportDocument(fixture));
+  assert.ok(text.includes('"chars": [1, 5]') || text.includes('{"chars":[1,5]}'));
+  assert.ok(!/"chars": \[\r?\n/.test(text));
+  assert.strictEqual(JSON.parse(text).chapters.length, 3);
 });
 
 console.log('\n顺序操作');
@@ -188,7 +197,7 @@ test('定位角色', () => {
   sameRaw(hits.map((h) => `${h.chapterNo}-${h.panelIndex}`), ['3-2', '3-3']);
 });
 
-console.log('\n交换格式（导出用的 JSON）');
+console.log('\nJSON 导出格式');
 test('不含任何内部 id', () => {
   const exported = model.toExportDocument(fixture);
   const text = JSON.stringify(exported);

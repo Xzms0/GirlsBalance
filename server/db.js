@@ -10,7 +10,7 @@
  *   * 话、槽位、角色编号、角色名各自成表并带索引，可以只查一部分；
  *   * 事务 + WAL，断电写不坏；快照用 VACUUM INTO，秒级且一致；
  *   * 仍然是一个本地文件，零依赖（Node 内置 node:sqlite），拷走就能用；
- *   * JSON 没有消失 —— 它降级成「导入/导出用的交换格式」，导出的 JSON 不含内部 id。
+ *   * JSON 仍然用于导入/导出，导出的 JSON 不包含内部 id。
  *
  * 存储结构见 schema/girls_dict.sql：
  *   info(key, value)                  schema_version / title / author / revision / updated_at
@@ -32,6 +32,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
+const pretty = require('./json_pretty.js');
 
 const SCHEMA_NAME = 'girls_dict';
 const STORAGE_VERSION = 2; // SQLite 存储结构版本
@@ -325,7 +326,7 @@ function defaultDocument(title = '超超你的字典') {
   return normalizeDocument({ chapters: [] }, [], title);
 }
 
-/** 去掉 id，得到可长期保存 / 给别的程序用的交换格式。 */
+/** 去掉内部 id，得到可长期保存 / 交给别的程序的导出格式。 */
 function stripIds(document) {
   const source = document || {};
   return {
@@ -1153,59 +1154,29 @@ class GirlsDB {
   /* ---------------------------------------------------------------- *
    * 导出
    * ---------------------------------------------------------------- */
-  /** 交换格式：**不含 id**，可以长期保存或交给别的程序。 */
+  /** 导出格式：**不含内部 id**，可以长期保存或交给别的程序。 */
   exportDocument() {
     return stripIds(this.loadDocument());
   }
 
-  exportJson(indent = 2) {
-    return `${JSON.stringify(this.exportDocument(), null, indent)}\n`;
+  exportJson() {
+    return pretty.stringify(this.exportDocument());
   }
 
-  /** Python 的 csv.writer 用 \r\n 结束行、必要时才加引号，这里保持一致。 */
+  /** 话-分镜 × 0..100 的 0/1 矩阵。 */
   exportCsv() {
     const document = this.loadDocument();
-    const names = document.meta.charNames;
-    const quote = (value) => {
-      const text = value === null || value === undefined ? '' : String(value);
-      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    };
-    const lines = ['chapter_no,chapter_title,panel_index,char,char_name\r\n'];
+    const columns = [];
+    for (let char = CHAR_MIN; char <= CHAR_MAX; char += 1) columns.push(char);
+    const lines = [`话-分镜,${columns.join(',')}\r\n`];
     document.chapters.forEach((chapter) => {
       chapter.panels.forEach((panel, index) => {
-        panel.chars.forEach((char) => {
-          lines.push(`${[chapter.no, chapter.title, index + 1, char, names[String(char)] || '']
-            .map(quote).join(',')}\r\n`);
-        });
+        const chars = new Set(panel.chars);
+        const cells = columns.map((char) => (chars.has(char) ? '1' : '0'));
+        lines.push(`${chapter.no}-${index + 1},${cells.join(',')}\r\n`);
       });
     });
     return lines.join('');
-  }
-
-  exportMarkdown() {
-    const document = this.loadDocument();
-    const stats = this.stats();
-    const lines = [`# ${document.meta.title || '超超你的字典'}`, ''];
-    lines.push(`- 话数：${stats.chapters}　槽位数：${stats.panels}　` +
-      `出现角色数：${stats.distinct_chars}　出场次数：${stats.appearances}`);
-    lines.push('');
-    document.chapters.forEach((chapter) => {
-      let head = `## 第 ${chapter.no} 话`;
-      if (chapter.title) head += ` ${chapter.title}`;
-      lines.push(head);
-      if (chapter.note) lines.push('', `> ${chapter.note}`);
-      lines.push('');
-      if (!chapter.panels.length) {
-        lines.push('_（暂无分镜）_', '');
-        return;
-      }
-      lines.push('| 槽位 | 角色编号 |', '| --- | --- |');
-      chapter.panels.forEach((panel, index) => {
-        lines.push(`| ${index + 1} | ${panel.chars.join('、') || '—'} |`);
-      });
-      lines.push('');
-    });
-    return lines.join('\n');
   }
 
   /* ---------------------------------------------------------------- *

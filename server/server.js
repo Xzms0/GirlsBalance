@@ -54,7 +54,6 @@ const MIME = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
-  '.md': 'text/markdown; charset=utf-8',
 };
 
 const ENDPOINTS = [
@@ -68,8 +67,8 @@ const ENDPOINTS = [
   { method: 'POST', path: '/api/db/import', desc: '从 JSON 文件或对象导入；body={path} 或 {db}' },
   { method: 'POST', path: '/api/db/clear', desc: '清空所有数据' },
   { method: 'POST', path: '/api/db/validate', desc: '只校验不写入' },
-  { method: 'GET', path: '/api/db/export?format=json|csv|md|sqlite', desc: '导出（JSON 不含 id）' },
-  { method: 'GET', path: '/api/db/raw', desc: '交换格式 JSON 文本' },
+  { method: 'GET', path: '/api/db/export?format=json|csv|sqlite', desc: '导出 JSON / CSV / SQLite' },
+  { method: 'GET', path: '/api/db/raw', desc: 'JSON 文本' },
   { method: 'GET', path: '/api/stats', desc: '角色出场次数等派生统计' },
   { method: 'GET', path: '/api/find?char=12', desc: '某个角色出现在哪些话/槽位' },
   { method: 'GET', path: '/api/search?q=文字', desc: '按标题/备注/角色名搜索' },
@@ -286,7 +285,7 @@ function createApp(options, existingDatabase) {
       return sendJson(res, 200, { ok: true, revision: document.revision, db: document }, origin);
     }
     if (pathname === '/api/db/raw') {
-      // 数据库本体现在是 SQLite；这里给的是「交换格式」JSON 文本（不含 id）
+      // 数据库是 SQLite；这里返回导出格式 JSON
       return send(res, 200, Buffer.from(database.exportJson(), 'utf8'),
         'application/json; charset=utf-8', null, origin);
     }
@@ -295,10 +294,6 @@ function createApp(options, existingDatabase) {
       if (format === 'csv') {
         return sendDownload(res, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(database.exportCsv(), 'utf8')]),
           'girls_dict.csv', 'text/csv; charset=utf-8', origin);
-      }
-      if (format === 'md' || format === 'markdown') {
-        return sendDownload(res, Buffer.from(database.exportMarkdown(), 'utf8'),
-          'girls_dict.md', 'text/markdown; charset=utf-8', origin);
       }
       if (format === 'sqlite' || format === 'sqlite3' || format === 'db') {
         const blob = database.exists() ? fs.readFileSync(database.path) : Buffer.alloc(0);
