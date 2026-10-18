@@ -1,13 +1,13 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 6625,
-  "exportedAt": "2026-10-18T10:15:31+00:00",
+  "revision": 6639,
+  "exportedAt": "2026-10-18T10:18:32+00:00",
   "title": "超超你的字典",
   "author": "Xzer0",
   "counts": {
-    "chapters": 35,
-    "panels": 2849,
+    "chapters": 41,
+    "panels": 2855,
     "appearances": 5305,
     "characters": 9,
     "charMin": 0,

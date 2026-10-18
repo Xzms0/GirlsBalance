@@ -1,8 +1,8 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 6625,
-  "exportedAt": "2026-10-18T10:15:31+00:00",
+  "revision": 6639,
+  "exportedAt": "2026-10-18T10:18:32+00:00",
   "chapters": [
     {
       "no": 1,
@@ -547,6 +547,60 @@
       "appearances": 0,
       "characters": [],
       "file": "0035.json"
+    },
+    {
+      "no": 36,
+      "title": "对你的全垒打起誓",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0036.json"
+    },
+    {
+      "no": 37,
+      "title": "喜欢喜欢最喜欢❤",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0037.json"
+    },
+    {
+      "no": 38,
+      "title": "KTV危机",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0038.json"
+    },
+    {
+      "no": 39,
+      "title": "美杉学姐",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0039.json"
+    },
+    {
+      "no": 40,
+      "title": "忘不了的过去",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0040.json"
+    },
+    {
+      "no": 41,
+      "title": "美美美学姐的美丽指南（大概）",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0041.json"
     }
   ]
 }
