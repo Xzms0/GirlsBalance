@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="本站用于统计漫画《超超超超超喜欢你的100个女朋友》中各角色的登场情况">
+<title>超超你的小站</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235eead4'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle' fill='%230b141b' font-family='sans-serif'%3E%E2%99%A5%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">GIRLS BALANCE</p>
+    <h1>超超你的小站</h1>
+    <p class="description">本站用于统计漫画《超超超超超喜欢你的100个女朋友》中各角色的登场情况</p>
+    <p class="meta-line" aria-live="polite">
+      <span id="meta-chars">正在读取…</span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span id="meta-chapter"></span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span id="meta-updated"></span>
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="board" aria-label="角色统计">
+    <div class="controls">
+      <label class="control">
+        <span class="control-label">统计</span>
+        <select id="metric">
+          <option value="count">计数</option>
+          <option value="points">积分</option>
+          <option value="weighted">加权</option>
+        </select>
+      </label>
+      <label class="control">
+        <span class="control-label">排序</span>
+        <select id="sort">
+          <option value="char">默认（角色编号）</option>
+          <option value="data">按数据排序</option>
+        </select>
+      </label>
+      <label class="control">
+        <span class="control-label">顺序</span>
+        <select id="order">
+          <option value="asc">升序</option>
+          <option value="desc">降序</option>
+        </select>
+      </label>
+      <label class="control control-grow">
+        <span class="control-label">起始角色</span>
+        <select id="start-char">
+          <option value="all">从最初开始</option>
+        </select>
+      </label>
+    </div>
+    <div class="chart" id="chart" role="list" aria-label="角色统计条形图"></div>
+    <p class="empty hidden" id="empty">还没有发布数据。</p>
+  </section>
+
+  <footer class="foot">
+    <span class="version">数据版本 <b id="revision">—</b></span>
+    <!-- 修改社交链接：改下面三个 href 和文字即可。 -->
+    <nav class="links" aria-label="社交链接">
+      <a href="https://github.com/Xzms0/GirlsBalance" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://space.bilibili.com/235507227" target="_blank" rel="noreferrer">Bilibili</a>
+      <a href="mailto:1576966800@qq.com">邮箱</a>
+    </nav>
+  </footer>
+</main>
+
+<noscript><p class="noscript">需要启用 JavaScript 才能看到统计图。</p></noscript>
+<script src="js/chart.js"></script>
+</body>
+</html>

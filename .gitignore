@@ -1,0 +1,29 @@
+# 运行时产物
+__pycache__/
+*.pyc
+.tmp-*/
+.tmp-tests/
+.tmp-bench*/
+*.tmp
+
+# 本地 SQLite 数据库（对外只发布 docs/data 里的分片 JSON）
+/data/*.sqlite3
+/data/*.sqlite3-wal
+/data/*.sqlite3-shm
+
+# 数据快照
+/data/backups/
+data/*.broken-*.json
+data/README-broken.txt
+
+# 权限修复记录
+.acl-repair/
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
+
+# 交接文档
+HANDOFF.md
+TASK.md

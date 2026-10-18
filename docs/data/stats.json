@@ -1,0 +1,926 @@
+{
+  "schema": "girls_dict",
+  "schemaVersion": 1,
+  "revision": 5908,
+  "exportedAt": "2026-10-18T08:23:08+00:00",
+  "totalChapters": 32,
+  "totalPanels": 2574,
+  "totalAppearances": 4746,
+  "characterCount": 8,
+  "lastChapter": 32,
+  "maxCount": 1370,
+  "maxPoints": 6829.3,
+  "maxWeighted": 4695.92,
+  "maxPanels": 1370,
+  "characters": [
+    {
+      "char": 0,
+      "name": "爱城恋太郎",
+      "count": 1370,
+      "panels": 1370,
+      "points": 6829.3,
+      "weighted": 4695.92,
+      "firstChapter": 1
+    },
+    {
+      "char": 1,
+      "name": "花园羽香里",
+      "count": 738,
+      "panels": 738,
+      "points": 2935.34,
+      "weighted": 1955.43,
+      "firstChapter": 1
+    },
+    {
+      "char": 2,
+      "name": "院田唐音",
+      "count": 769,
+      "panels": 769,
+      "points": 2964.54,
+      "weighted": 1949.13,
+      "firstChapter": 1
+    },
+    {
+      "char": 3,
+      "name": "好本静",
+      "count": 512,
+      "panels": 512,
+      "points": 2230.28,
+      "weighted": 1469.68,
+      "firstChapter": 3
+    },
+    {
+      "char": 4,
+      "name": "荣逢凪乃",
+      "count": 447,
+      "panels": 447,
+      "points": 1779.61,
+      "weighted": 1322.5,
+      "firstChapter": 6
+    },
+    {
+      "char": 5,
+      "name": "药膳楠莉",
+      "count": 418,
+      "panels": 418,
+      "points": 1631.61,
+      "weighted": 1354.28,
+      "firstChapter": 10
+    },
+    {
+      "char": 6,
+      "name": "花园羽羽里",
+      "count": 278,
+      "panels": 278,
+      "points": 1135.34,
+      "weighted": 1030.1,
+      "firstChapter": 15
+    },
+    {
+      "char": 7,
+      "name": "原贺胡桃",
+      "count": 214,
+      "panels": 214,
+      "points": 1061.97,
+      "weighted": 1061.97,
+      "firstChapter": 24
+    },
+    {
+      "char": 8,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 9,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 10,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 11,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 12,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 13,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 14,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 15,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 16,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 17,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 18,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 19,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 20,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 21,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 22,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 23,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 24,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 25,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 26,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 27,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 28,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 29,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 30,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 31,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 32,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 33,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 34,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 35,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 36,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 37,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 38,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 39,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 40,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 41,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 42,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 43,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 44,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 45,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 46,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 47,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 48,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 49,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 50,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 51,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 52,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 53,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 54,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 55,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 56,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 57,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 58,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 59,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 60,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 61,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 62,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 63,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 64,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 65,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 66,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 67,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 68,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 69,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 70,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 71,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 72,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 73,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 74,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 75,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 76,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 77,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 78,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 79,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 80,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 81,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 82,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 83,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 84,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 85,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 86,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 87,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 88,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 89,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 90,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 91,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 92,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 93,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 94,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 95,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 96,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 97,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 98,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 99,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    },
+    {
+      "char": 100,
+      "name": "",
+      "count": 0,
+      "panels": 0,
+      "points": 0.0,
+      "weighted": 0.0,
+      "firstChapter": null
+    }
+  ]
+}

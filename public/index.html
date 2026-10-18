@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>超超你的字典</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%238b7bff'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%230e1016' font-family='sans-serif'%3E%E2%9D%A4%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">❤</span>
+    <div class="brand-text">
+      <h1>超超你的字典</h1>
+    </div>
+  </div>
+
+  <nav class="tabs" id="view-tabs">
+    <button class="tab active" data-view="entry">录入</button>
+    <button class="tab" data-view="dict">角色字典</button>
+    <button class="tab" data-view="data">数据与存储</button>
+  </nav>
+
+  <div class="toolbar">
+    <button class="icon-btn" id="btn-undo" title="撤销（Ctrl+Z）">↶</button>
+    <button class="icon-btn" id="btn-redo" title="重做（Ctrl+Y）">↷</button>
+    <span class="status-pill status-idle" id="save-status" title="保存状态">就绪</span>
+    <button class="btn tiny" id="btn-save" title="立即保存（Ctrl+S）">保存</button>
+    <button class="btn tiny primary" id="btn-publish" title="导出 docs/data 并提交到 Git">发布</button>
+    <button class="icon-btn" id="btn-help" title="使用说明（?）">?</button>
+  </div>
+</header>
+
+<div class="banner hidden" id="banner"></div>
+
+<main class="layout">
+  <aside class="sidebar">
+    <section class="side-block">
+      <div class="side-title">检索</div>
+      <input class="side-input" id="search-input" placeholder="编号 0–100，或标题/角色名">
+      <div class="results" id="search-results"></div>
+    </section>
+
+    <section class="side-block grow">
+      <div class="side-title">话目录 <span class="muted small" id="nav-count"></span></div>
+      <div class="nav" id="chapter-nav"></div>
+    </section>
+
+    <section class="side-block">
+      <div class="side-title">总览</div>
+      <div class="overview" id="overview"></div>
+    </section>
+  </aside>
+
+  <section class="content">
+    <div class="view" id="view-entry"></div>
+    <div class="view hidden" id="view-dict"></div>
+    <div class="view hidden" id="view-data"></div>
+  </section>
+</main>
+
+<div class="toasts" id="toasts"></div>
+<div class="modal-root hidden" id="modal-root"></div>
+
+<!-- 悬浮的快速新建：条目再多也不用滚回顶部 -->
+<button class="fab hidden" id="btn-quick-new" data-act="new-chapter" data-nofocus="1"
+        title="新建一话（插在当前话后面）" aria-label="新建一话">
+  <span aria-hidden="true">+</span>
+</button>
+
+<noscript>
+  <div class="noscript">需要启用 JavaScript 才能使用本工具。</div>
+</noscript>
+
+<script src="js/model.js"></script>
+<script src="js/adapters.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script src="js/publish.js"></script>
+</body>
+</html>

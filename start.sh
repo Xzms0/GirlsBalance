@@ -1,0 +1,1 @@
+python3 server/server.py --port 8777 --open

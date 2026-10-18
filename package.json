@@ -1,0 +1,17 @@
+{
+  "name": "girls-dict",
+  "version": "2.0.0",
+  "private": true,
+  "description": "超超你的字典 · 记录漫画每一话每个分镜里出场角色编号的本地工具",
+  "keywords": ["manga", "panel", "character", "sqlite", "local-first"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server/server.js --open",
+    "serve": "node server/server.js",
+    "check": "node server/server.js --check",
+    "test": "node tests/test_db.js && node tests/test_model.js && node tests/test_ui_smoke.js && node tests/test_chart_smoke.js"
+  }
+}

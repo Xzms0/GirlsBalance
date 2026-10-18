@@ -1,0 +1,52 @@
+{
+  "schema": "girls_dict",
+  "schemaVersion": 1,
+  "exportedAt": "2026-01-01T00:00:00Z",
+  "meta": {
+    "title": "超超你的字典 · 示例",
+    "author": "示例数据",
+    "charMin": 0,
+    "charMax": 100,
+    "charNames": {
+      "1": "超超",
+      "2": "小美",
+      "5": "阿蓝",
+      "12": "会长",
+      "23": "风纪委员",
+      "100": "彩蛋角色"
+    }
+  },
+  "chapters": [
+    {
+      "no": 1,
+      "title": "相遇",
+      "note": "",
+      "panels": [
+        { "chars": [1, 5] },
+        { "chars": [1, 2, 5] },
+        { "chars": [2] },
+        { "chars": [1, 2, 5, 23] }
+      ]
+    },
+    {
+      "no": 2,
+      "title": "放学后",
+      "note": "这一话开始出现会长",
+      "panels": [
+        { "chars": [1, 12] },
+        { "chars": [12, 23] },
+        { "chars": [1, 2, 12, 23] }
+      ]
+    },
+    {
+      "no": 3,
+      "title": "雨天",
+      "note": "",
+      "panels": [
+        { "chars": [1, 5] },
+        { "chars": [100] },
+        { "chars": [100, 23] }
+      ]
+    }
+  ]
+}
