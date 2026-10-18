@@ -46,7 +46,7 @@ from girls_db import (  # noqa: E402  (需要先插入 sys.path)
     ValidationError,
     normalize_document,
 )
-from site_publish import publish_site, publish_status  # noqa: E402
+from site_publish import SITE_FORMAT_VERSION, publish_site, publish_status  # noqa: E402
 
 APP_NAME = "girls_dict"
 APP_TITLE = "超超你的字典"
@@ -275,6 +275,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {
                 "ok": True, "app": APP_NAME, "title": APP_TITLE, "version": APP_VERSION,
                 "storage": "sqlite", "storageVersion": STORAGE_VERSION, "exportVersion": EXPORT_VERSION,
+                "siteFormatVersion": SITE_FORMAT_VERSION,
                 "charMin": CHAR_MIN, "charMax": CHAR_MAX,
                 "dataFile": str(database.path), "dataFileExists": database.exists(),
                 "dataFileSize": database.db_size() if database.exists() else 0,

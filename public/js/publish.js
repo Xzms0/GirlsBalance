@@ -3,6 +3,9 @@
  *
  * 只做一件事：把当前 SQLite 保存后，调用本机服务的 /api/publish，
  * 由服务端导出 docs/data 并 commit / push。浏览器不接触 Git 凭据。
+ *
+ * 发布前会检查 /api/health 的 siteFormatVersion；如果服务端还是旧代码，
+ * 按钮会被禁用，避免用旧格式覆盖 docs/data。
  */
 (function (global) {
   'use strict';
@@ -11,6 +14,7 @@
   var ui = global.GD && global.GD.ui;
   var button = null;
   var busy = false;
+  var serverReady = false;
   var LABEL = '发布';
 
   function toast(message, kind, duration) {
@@ -20,8 +24,8 @@
   function setBusy(value) {
     busy = value;
     if (!button) return;
-    button.disabled = value;
-    button.textContent = value ? '发布中…' : LABEL;
+    button.disabled = value || !serverReady;
+    button.textContent = value ? '发布中…' : (serverReady ? LABEL : '服务旧');
   }
 
   function commitLink(hash) {
@@ -29,8 +33,40 @@
     return ' · ' + hash;
   }
 
+  function checkServer(notify) {
+    if (!global.fetch) {
+      serverReady = false;
+      setBusy(false);
+      return Promise.resolve(false);
+    }
+    return global.fetch('/api/health', { cache: 'no-store' })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        serverReady = !!(data && Number(data.siteFormatVersion) === 2);
+        if (!serverReady) {
+          if (button) {
+            button.title = '当前运行的服务端还是旧代码。请关闭所有旧服务进程，重新运行 start.bat 后再发布。';
+          }
+          if (notify) {
+            toast('服务端代码不是最新版本，已禁止发布。请关闭旧进程并重启 start.bat。', 'error', 9000);
+          }
+        } else if (button) {
+          button.title = '导出 docs/data 并提交到 Git';
+        }
+        setBusy(busy);
+        return serverReady;
+      })
+      .catch(function () {
+        serverReady = false;
+        if (button) button.title = '无法连接本机服务，请确认服务正在运行。';
+        if (notify) toast('无法连接本机服务，已取消发布。', 'error', 7000);
+        setBusy(busy);
+        return false;
+      });
+  }
+
   function refreshStatus() {
-    if (!button || !global.fetch) return;
+    if (!button || !global.fetch || !serverReady) return;
     global.fetch('/api/publish/status', { cache: 'no-store' })
       .then(function (response) { return response.json(); })
       .then(function (data) {
@@ -62,55 +98,53 @@
       return;
     }
     setBusy(true);
-    var saving;
-    try {
-      saving = store.saveNow(false);
-    } catch (error) {
-      toast('保存失败：' + (error && error.message ? error.message : error), 'error');
-      setBusy(false);
-      return;
-    }
-    Promise.resolve(saving).then(function (saved) {
-      if (!saved) {
-        toast('保存失败，已取消发布。请先处理保存错误。', 'warn', 6000);
+    checkServer(true).then(function (ok) {
+      if (!ok) return null;
+      var saving;
+      try {
+        saving = store.saveNow(false);
+      } catch (error) {
+        toast('保存失败：' + (error && error.message ? error.message : error), 'error');
         return null;
       }
-      if (!global.fetch) {
-        toast('浏览器不支持 fetch，无法发布', 'error');
-        return null;
-      }
-      return global.fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      }).then(function (response) {
-        return response.text().then(function (text) {
-          try {
-            return text ? JSON.parse(text) : {};
-          } catch (error) {
-            return { ok: false, error: '服务返回的不是 JSON（HTTP ' + response.status + '）' };
-          }
-        });
-      });
-    }).then(function (data) {
-      if (!data) return;
-      if (data.ok) {
-        if (data.changed === false) {
-          toast('数据没有变化，没有产生新提交', 'info');
-        } else if (data.pushed === false) {
-          toast('已提交' + commitLink(data.commit) + '，但推送失败：' +
-            (data.error || '请检查网络 / 远端 / 凭据'), 'warn', 8000);
-        } else {
-          toast('已发布 rev ' + data.revision + commitLink(data.commit), 'ok', 5200);
+      return Promise.resolve(saving).then(function (saved) {
+        if (!saved) {
+          toast('保存失败，已取消发布。请先处理保存错误。', 'warn', 6000);
+          return null;
         }
-      } else {
-        var message = data.error || '未知错误';
-        if (data.committed) message = '本地已提交' + commitLink(data.commit) + '，但发布未完成：' + message;
-        toast('发布失败：' + message, 'error', 9000);
-      }
-      refreshStatus();
-    }).catch(function (error) {
-      toast('发布失败：' + (error && error.message ? error.message : error), 'error', 8000);
+        return global.fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        }).then(function (response) {
+          return response.text().then(function (text) {
+            try {
+              return text ? JSON.parse(text) : {};
+            } catch (error) {
+              return { ok: false, error: '服务返回的不是 JSON（HTTP ' + response.status + '）' };
+            }
+          });
+        });
+      }).then(function (data) {
+        if (!data) return;
+        if (data.ok) {
+          if (data.changed === false) {
+            toast('数据没有变化，没有产生新提交', 'info');
+          } else if (data.pushed === false) {
+            toast('已提交' + commitLink(data.commit) + '，但推送失败：' +
+              (data.error || '请检查网络 / 远端 / 凭据'), 'warn', 8000);
+          } else {
+            toast('已发布 rev ' + data.revision + commitLink(data.commit), 'ok', 5200);
+          }
+        } else {
+          var message = data.error || '未知错误';
+          if (data.committed) message = '本地已提交' + commitLink(data.commit) + '，但发布未完成：' + message;
+          toast('发布失败：' + message, 'error', 9000);
+        }
+        refreshStatus();
+      }).catch(function (error) {
+        toast('发布失败：' + (error && error.message ? error.message : error), 'error', 8000);
+      });
     }).then(function () {
       setBusy(false);
     });
@@ -120,7 +154,9 @@
     button = document.getElementById('btn-publish');
     if (!button) return;
     button.addEventListener('click', publish);
-    refreshStatus();
+    checkServer(true).then(function (ok) {
+      if (ok) refreshStatus();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

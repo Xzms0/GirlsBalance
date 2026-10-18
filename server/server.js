@@ -26,7 +26,7 @@ const { URL } = require('url');
 const { spawn } = require('child_process');
 
 const db = require('./db.js');
-const { publishSite, publishStatus } = require('./site_publish.js');
+const { SITE_FORMAT_VERSION, publishSite, publishStatus } = require('./site_publish.js');
 
 const APP_NAME = 'girls_dict';
 const APP_TITLE = '超超你的字典';
@@ -269,6 +269,7 @@ function createApp(options, existingDatabase) {
       return sendJson(res, 200, {
         ok: true, app: APP_NAME, title: APP_TITLE, version: APP_VERSION,
         storage: 'sqlite', storageVersion: db.STORAGE_VERSION, exportVersion: db.EXPORT_VERSION,
+        siteFormatVersion: SITE_FORMAT_VERSION,
         charMin: db.CHAR_MIN, charMax: db.CHAR_MAX,
         dataFile: database.path, dataFileExists: database.exists(),
         dataFileSize: database.exists() ? database.dbSize() : 0,

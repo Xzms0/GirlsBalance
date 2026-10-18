@@ -41,6 +41,18 @@ python -m http.server 8788 --directory docs
 
 访问 `http://127.0.0.1:8788/`。公开站只读 `docs/data/` 下的 JSON，不需要启动后端。
 
+### 公开站
+
+- 标题「超超你的小站」，英文标识 `GIRLS BALANCE`；
+- 标题下方显示：更新至第几个角色、更新至第几话、最后更新日期；
+- 条形图默认按角色编号排序，可选按数据排序，以及升序 / 降序；
+- 没有记录的角色不显示；
+- 三种统计：**计数**、**积分**、**加权**；
+- 可选择某个角色，只统计从该角色首次登场话到最新话的数据；
+- 每个角色的颜色来自 [`docs/colors.json`](docs/colors.json)，可直接编辑；
+- 页脚保留数据版本，并提供 GitHub、Bilibili、邮箱链接。
+
+> 页脚三个链接在 [`docs/index.html`](docs/index.html) 的 `<nav class="links">` 里修改；HTML 内有注释标记。
 
 ## 发布公开数据
 
@@ -93,8 +105,6 @@ python tools/publish.py --force         # 允许空库覆盖已有公开数据�
 发布失败时不会影响本地 SQLite；如果 commit 成功但 push 失败，提交会留在本地，修好网络/远端后再点一次发布即可补推。
 
 > 安全阀：如果当前 SQLite 是空的，而 `docs/data` 里已有分镜，按钮会拒绝发布，避免新机器/空库误覆盖公开数据。确实要清空时用 `python tools/publish.py --force`。
-
-> 如果发布后页面里角色变成 0：通常是本机服务还在跑更新前的旧代码（旧的 `site_publish` 进程），所以只更新了 manifest 的章节/分镜数，`stats.json` 仍是旧格式。**重启 `start.bat` / `server.py` 后再点一次发布**即可；新数据会带 `formatVersion: 2`。页面现在也会检测旧格式、回退显示计数并给出提示。
 
 > 注意：`git push` 会推送当前分支上所有未推送的提交，不只是数据提交。发布前如果还有其它本地提交，它们也会一起上去。
 
@@ -162,13 +172,13 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   "schema": "girls_dict",
   "schemaVersion": 1,
   "formatVersion": 2,
-  "revision": 6621,
-  "exportedAt": "2026-10-18T10:05:24+00:00",
-  "totalChapters": 34,
-  "totalPanels": 2848,
+  "revision": 6640,
+  "exportedAt": "2026-10-18T10:31:57+00:00",
+  "totalChapters": 40,
+  "totalPanels": 2854,
   "totalAppearances": 5305,
   "characterCount": 9,
-  "lastChapter": 34,
+  "lastChapter": 40,
   "maxCount": 1478,
   "maxPoints": 731.4,
   "maxWeighted": 524.1,
@@ -188,7 +198,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 
 `characters` 固定包含 0–100 全部编号，按角色编号升序；`count` / `panels` 是分镜计数，`points` 是积分，`weighted` 是加权，`firstChapter` 是首次登场话（没有记录时为 `null`）。`points` / `weighted` 保留一位小数。
 
-`formatVersion: 2` 是公开数据的格式版本。旧版发布数据没有这个字段：页面仍会用 `panels` 回退显示计数，但会提示“旧版格式”，并禁用积分 / 加权 / 起始角色筛选。
+`formatVersion: 2` 是公开数据的格式版本。
 
 三种统计口径：
 
@@ -203,11 +213,11 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   "schema": "girls_dict",
   "schemaVersion": 1,
   "formatVersion": 2,
-  "revision": 6621,
-  "exportedAt": "2026-10-18T10:05:24+00:00",
+  "revision": 6640,
+  "exportedAt": "2026-10-18T10:31:57+00:00",
   "title": "超超你的字典",
   "author": "Xzer0",
-  "counts": { "chapters": 34, "panels": 2848, "appearances": 5305, "characters": 9, "charMin": 0, "charMax": 100 },
+  "counts": { "chapters": 40, "panels": 2854, "appearances": 5305, "characters": 9, "charMin": 0, "charMax": 100 },
   "files": { "stats": "stats.json", "chapters": "chapters/index.json" }
 }
 ```
@@ -219,7 +229,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   "schema": "girls_dict",
   "schemaVersion": 1,
   "formatVersion": 2,
-  "revision": 6621,
+  "revision": 6640,
   "chapters": [
     {
       "no": 1,

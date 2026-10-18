@@ -1,8 +1,9 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
+  "formatVersion": 2,
   "revision": 6640,
-  "exportedAt": "2026-10-18T10:20:40+00:00",
+  "exportedAt": "2026-10-18T10:31:57+00:00",
   "title": "超超你的字典",
   "author": "Xzer0",
   "counts": {

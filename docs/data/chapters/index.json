@@ -1,8 +1,9 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
+  "formatVersion": 2,
   "revision": 6640,
-  "exportedAt": "2026-10-18T10:20:40+00:00",
+  "exportedAt": "2026-10-18T10:31:57+00:00",
   "chapters": [
     {
       "no": 1,
@@ -15,6 +16,24 @@
         1,
         2
       ],
+      "weight": 3,
+      "metrics": {
+        "0": {
+          "count": 134,
+          "points": 81.866667,
+          "weighted": 30.7
+        },
+        "1": {
+          "count": 91,
+          "points": 39.466667,
+          "weighted": 14.8
+        },
+        "2": {
+          "count": 93,
+          "points": 41.866667,
+          "weighted": 15.7
+        }
+      },
       "file": "0001.json"
     },
     {
@@ -28,6 +47,24 @@
         1,
         2
       ],
+      "weight": 3,
+      "metrics": {
+        "0": {
+          "count": 108,
+          "points": 52.933333,
+          "weighted": 19.85
+        },
+        "1": {
+          "count": 94,
+          "points": 37.333333,
+          "weighted": 14.0
+        },
+        "2": {
+          "count": 99,
+          "points": 40.133333,
+          "weighted": 15.05
+        }
+      },
       "file": "0002.json"
     },
     {
@@ -42,6 +79,29 @@
         2,
         3
       ],
+      "weight": 4,
+      "metrics": {
+        "0": {
+          "count": 88,
+          "points": 44.266667,
+          "weighted": 22.133333
+        },
+        "1": {
+          "count": 21,
+          "points": 7.2,
+          "weighted": 3.6
+        },
+        "2": {
+          "count": 22,
+          "points": 8.266667,
+          "weighted": 4.133333
+        },
+        "3": {
+          "count": 103,
+          "points": 63.466667,
+          "weighted": 31.733333
+        }
+      },
       "file": "0003.json"
     },
     {
@@ -56,6 +116,29 @@
         2,
         3
       ],
+      "weight": 4,
+      "metrics": {
+        "0": {
+          "count": 48,
+          "points": 23.8,
+          "weighted": 11.9
+        },
+        "1": {
+          "count": 39,
+          "points": 15.4,
+          "weighted": 7.7
+        },
+        "2": {
+          "count": 33,
+          "points": 14.066667,
+          "weighted": 7.033333
+        },
+        "3": {
+          "count": 43,
+          "points": 21.133333,
+          "weighted": 10.566667
+        }
+      },
       "file": "0004.json"
     },
     {
@@ -70,6 +153,29 @@
         2,
         3
       ],
+      "weight": 4,
+      "metrics": {
+        "0": {
+          "count": 41,
+          "points": 22.466667,
+          "weighted": 11.233333
+        },
+        "1": {
+          "count": 35,
+          "points": 14.6,
+          "weighted": 7.3
+        },
+        "2": {
+          "count": 48,
+          "points": 22.466667,
+          "weighted": 11.233333
+        },
+        "3": {
+          "count": 45,
+          "points": 24.466667,
+          "weighted": 12.233333
+        }
+      },
       "file": "0005.json"
     },
     {
@@ -85,6 +191,34 @@
         3,
         4
       ],
+      "weight": 5,
+      "metrics": {
+        "0": {
+          "count": 46,
+          "points": 23.76,
+          "weighted": 14.85
+        },
+        "1": {
+          "count": 6,
+          "points": 1.226667,
+          "weighted": 0.766667
+        },
+        "2": {
+          "count": 8,
+          "points": 2.426667,
+          "weighted": 1.516667
+        },
+        "3": {
+          "count": 7,
+          "points": 1.626667,
+          "weighted": 1.016667
+        },
+        "4": {
+          "count": 53,
+          "points": 32.56,
+          "weighted": 20.35
+        }
+      },
       "file": "0006.json"
     },
     {
@@ -97,6 +231,19 @@
         0,
         4
       ],
+      "weight": 5,
+      "metrics": {
+        "0": {
+          "count": 49,
+          "points": 26.8,
+          "weighted": 16.75
+        },
+        "4": {
+          "count": 58,
+          "points": 34.0,
+          "weighted": 21.25
+        }
+      },
       "file": "0007.json"
     },
     {
@@ -112,6 +259,34 @@
         3,
         4
       ],
+      "weight": 5,
+      "metrics": {
+        "0": {
+          "count": 34,
+          "points": 12.253333,
+          "weighted": 7.658333
+        },
+        "1": {
+          "count": 47,
+          "points": 20.12,
+          "weighted": 12.575
+        },
+        "2": {
+          "count": 19,
+          "points": 10.253333,
+          "weighted": 6.408333
+        },
+        "3": {
+          "count": 26,
+          "points": 13.72,
+          "weighted": 8.575
+        },
+        "4": {
+          "count": 37,
+          "points": 14.053333,
+          "weighted": 8.783333
+        }
+      },
       "file": "0008.json"
     },
     {
@@ -127,6 +302,34 @@
         3,
         4
       ],
+      "weight": 5,
+      "metrics": {
+        "0": {
+          "count": 56,
+          "points": 27.813333,
+          "weighted": 17.383333
+        },
+        "1": {
+          "count": 24,
+          "points": 9.813333,
+          "weighted": 6.133333
+        },
+        "2": {
+          "count": 38,
+          "points": 18.346667,
+          "weighted": 11.466667
+        },
+        "3": {
+          "count": 18,
+          "points": 9.68,
+          "weighted": 6.05
+        },
+        "4": {
+          "count": 24,
+          "points": 11.146667,
+          "weighted": 6.966667
+        }
+      },
       "file": "0009.json"
     },
     {
@@ -143,6 +346,39 @@
         4,
         5
       ],
+      "weight": 6,
+      "metrics": {
+        "0": {
+          "count": 52,
+          "points": 27.36,
+          "weighted": 20.52
+        },
+        "1": {
+          "count": 1,
+          "points": 0.16,
+          "weighted": 0.12
+        },
+        "2": {
+          "count": 1,
+          "points": 0.16,
+          "weighted": 0.12
+        },
+        "3": {
+          "count": 1,
+          "points": 0.16,
+          "weighted": 0.12
+        },
+        "4": {
+          "count": 2,
+          "points": 0.56,
+          "weighted": 0.42
+        },
+        "5": {
+          "count": 65,
+          "points": 38.8,
+          "weighted": 29.1
+        }
+      },
       "file": "0010.json"
     },
     {
@@ -159,6 +395,39 @@
         4,
         5
       ],
+      "weight": 6,
+      "metrics": {
+        "0": {
+          "count": 45,
+          "points": 19.053333,
+          "weighted": 14.29
+        },
+        "1": {
+          "count": 27,
+          "points": 10.306667,
+          "weighted": 7.73
+        },
+        "2": {
+          "count": 20,
+          "points": 5.306667,
+          "weighted": 3.98
+        },
+        "3": {
+          "count": 20,
+          "points": 6.44,
+          "weighted": 4.83
+        },
+        "4": {
+          "count": 21,
+          "points": 7.24,
+          "weighted": 5.43
+        },
+        "5": {
+          "count": 40,
+          "points": 18.853333,
+          "weighted": 14.14
+        }
+      },
       "file": "0011.json"
     },
     {
@@ -175,6 +444,39 @@
         4,
         5
       ],
+      "weight": 6,
+      "metrics": {
+        "0": {
+          "count": 51,
+          "points": 23.666667,
+          "weighted": 17.75
+        },
+        "1": {
+          "count": 24,
+          "points": 8.466667,
+          "weighted": 6.35
+        },
+        "2": {
+          "count": 23,
+          "points": 7.466667,
+          "weighted": 5.6
+        },
+        "3": {
+          "count": 24,
+          "points": 9.933333,
+          "weighted": 7.45
+        },
+        "4": {
+          "count": 10,
+          "points": 4.533333,
+          "weighted": 3.4
+        },
+        "5": {
+          "count": 11,
+          "points": 4.333333,
+          "weighted": 3.25
+        }
+      },
       "file": "0012.json"
     },
     {
@@ -191,6 +493,39 @@
         4,
         5
       ],
+      "weight": 6,
+      "metrics": {
+        "0": {
+          "count": 46,
+          "points": 22.72,
+          "weighted": 17.04
+        },
+        "1": {
+          "count": 10,
+          "points": 4.28,
+          "weighted": 3.21
+        },
+        "2": {
+          "count": 7,
+          "points": 1.88,
+          "weighted": 1.41
+        },
+        "3": {
+          "count": 4,
+          "points": 0.68,
+          "weighted": 0.51
+        },
+        "4": {
+          "count": 28,
+          "points": 11.48,
+          "weighted": 8.61
+        },
+        "5": {
+          "count": 49,
+          "points": 26.96,
+          "weighted": 20.22
+        }
+      },
       "file": "0013.json"
     },
     {
@@ -207,6 +542,39 @@
         4,
         5
       ],
+      "weight": 6,
+      "metrics": {
+        "0": {
+          "count": 31,
+          "points": 12.12,
+          "weighted": 9.09
+        },
+        "1": {
+          "count": 45,
+          "points": 17.226667,
+          "weighted": 12.92
+        },
+        "2": {
+          "count": 26,
+          "points": 7.306667,
+          "weighted": 5.48
+        },
+        "3": {
+          "count": 26,
+          "points": 8.96,
+          "weighted": 6.72
+        },
+        "4": {
+          "count": 25,
+          "points": 5.96,
+          "weighted": 4.47
+        },
+        "5": {
+          "count": 27,
+          "points": 6.026667,
+          "weighted": 4.52
+        }
+      },
       "file": "0014.json"
     },
     {
@@ -224,6 +592,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 49,
+          "points": 33.226667,
+          "weighted": 29.073333
+        },
+        "1": {
+          "count": 23,
+          "points": 16.0,
+          "weighted": 14.0
+        },
+        "2": {
+          "count": 16,
+          "points": 5.026667,
+          "weighted": 4.398333
+        },
+        "3": {
+          "count": 12,
+          "points": 2.226667,
+          "weighted": 1.948333
+        },
+        "4": {
+          "count": 12,
+          "points": 2.226667,
+          "weighted": 1.948333
+        },
+        "5": {
+          "count": 13,
+          "points": 2.493333,
+          "weighted": 2.181667
+        },
+        "6": {
+          "count": 7,
+          "points": 4.4,
+          "weighted": 3.85
+        }
+      },
       "file": "0015.json"
     },
     {
@@ -240,6 +646,39 @@
         4,
         5
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 45,
+          "points": 18.04,
+          "weighted": 15.785
+        },
+        "1": {
+          "count": 5,
+          "points": 1.2,
+          "weighted": 1.05
+        },
+        "2": {
+          "count": 34,
+          "points": 8.373333,
+          "weighted": 7.326667
+        },
+        "3": {
+          "count": 28,
+          "points": 9.906667,
+          "weighted": 8.668333
+        },
+        "4": {
+          "count": 36,
+          "points": 11.706667,
+          "weighted": 10.243333
+        },
+        "5": {
+          "count": 35,
+          "points": 10.773333,
+          "weighted": 9.426667
+        }
+      },
       "file": "0016.json"
     },
     {
@@ -257,6 +696,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 46,
+          "points": 21.813333,
+          "weighted": 19.086667
+        },
+        "1": {
+          "count": 16,
+          "points": 9.066667,
+          "weighted": 7.933333
+        },
+        "2": {
+          "count": 32,
+          "points": 13.413333,
+          "weighted": 11.736667
+        },
+        "3": {
+          "count": 4,
+          "points": 0.746667,
+          "weighted": 0.653333
+        },
+        "4": {
+          "count": 5,
+          "points": 1.546667,
+          "weighted": 1.353333
+        },
+        "5": {
+          "count": 4,
+          "points": 0.746667,
+          "weighted": 0.653333
+        },
+        "6": {
+          "count": 20,
+          "points": 12.666667,
+          "weighted": 11.083333
+        }
+      },
       "file": "0017.json"
     },
     {
@@ -274,6 +751,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 32,
+          "points": 16.8,
+          "weighted": 14.7
+        },
+        "1": {
+          "count": 6,
+          "points": 3.733333,
+          "weighted": 3.266667
+        },
+        "2": {
+          "count": 42,
+          "points": 24.0,
+          "weighted": 21.0
+        },
+        "3": {
+          "count": 1,
+          "points": 0.133333,
+          "weighted": 0.116667
+        },
+        "4": {
+          "count": 1,
+          "points": 0.133333,
+          "weighted": 0.116667
+        },
+        "5": {
+          "count": 1,
+          "points": 0.133333,
+          "weighted": 0.116667
+        },
+        "6": {
+          "count": 30,
+          "points": 16.666667,
+          "weighted": 14.583333
+        }
+      },
       "file": "0018.json"
     },
     {
@@ -291,6 +806,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 37,
+          "points": 18.826667,
+          "weighted": 16.473333
+        },
+        "1": {
+          "count": 36,
+          "points": 18.786667,
+          "weighted": 16.438333
+        },
+        "2": {
+          "count": 11,
+          "points": 3.96,
+          "weighted": 3.465
+        },
+        "3": {
+          "count": 7,
+          "points": 1.586667,
+          "weighted": 1.388333
+        },
+        "4": {
+          "count": 7,
+          "points": 1.586667,
+          "weighted": 1.388333
+        },
+        "5": {
+          "count": 7,
+          "points": 1.586667,
+          "weighted": 1.388333
+        },
+        "6": {
+          "count": 18,
+          "points": 10.466667,
+          "weighted": 9.158333
+        }
+      },
       "file": "0019.json"
     },
     {
@@ -308,6 +861,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 32,
+          "points": 15.253333,
+          "weighted": 13.346667
+        },
+        "1": {
+          "count": 22,
+          "points": 6.453333,
+          "weighted": 5.646667
+        },
+        "2": {
+          "count": 38,
+          "points": 15.546667,
+          "weighted": 13.603333
+        },
+        "3": {
+          "count": 16,
+          "points": 4.293333,
+          "weighted": 3.756667
+        },
+        "4": {
+          "count": 15,
+          "points": 4.693333,
+          "weighted": 4.106667
+        },
+        "5": {
+          "count": 20,
+          "points": 4.586667,
+          "weighted": 4.013333
+        },
+        "6": {
+          "count": 26,
+          "points": 10.773333,
+          "weighted": 9.426667
+        }
+      },
       "file": "0020.json"
     },
     {
@@ -325,6 +916,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 26,
+          "points": 15.388571,
+          "weighted": 13.465
+        },
+        "1": {
+          "count": 22,
+          "points": 5.828571,
+          "weighted": 5.1
+        },
+        "2": {
+          "count": 16,
+          "points": 3.228571,
+          "weighted": 2.825
+        },
+        "3": {
+          "count": 31,
+          "points": 17.561905,
+          "weighted": 15.366667
+        },
+        "4": {
+          "count": 12,
+          "points": 3.601905,
+          "weighted": 3.151667
+        },
+        "5": {
+          "count": 14,
+          "points": 4.161905,
+          "weighted": 3.641667
+        },
+        "6": {
+          "count": 21,
+          "points": 4.628571,
+          "weighted": 4.05
+        }
+      },
       "file": "0021.json"
     },
     {
@@ -342,6 +971,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 50,
+          "points": 27.009524,
+          "weighted": 23.633333
+        },
+        "1": {
+          "count": 12,
+          "points": 4.87619,
+          "weighted": 4.266667
+        },
+        "2": {
+          "count": 9,
+          "points": 3.47619,
+          "weighted": 3.041667
+        },
+        "3": {
+          "count": 4,
+          "points": 0.542857,
+          "weighted": 0.475
+        },
+        "4": {
+          "count": 5,
+          "points": 0.742857,
+          "weighted": 0.65
+        },
+        "5": {
+          "count": 4,
+          "points": 0.542857,
+          "weighted": 0.475
+        },
+        "6": {
+          "count": 37,
+          "points": 18.809524,
+          "weighted": 16.458333
+        }
+      },
       "file": "0022.json"
     },
     {
@@ -359,6 +1026,44 @@
         5,
         6
       ],
+      "weight": 7,
+      "metrics": {
+        "0": {
+          "count": 50,
+          "points": 22.493333,
+          "weighted": 19.681667
+        },
+        "1": {
+          "count": 26,
+          "points": 10.826667,
+          "weighted": 9.473333
+        },
+        "2": {
+          "count": 24,
+          "points": 8.786667,
+          "weighted": 7.688333
+        },
+        "3": {
+          "count": 19,
+          "points": 7.786667,
+          "weighted": 6.813333
+        },
+        "4": {
+          "count": 14,
+          "points": 4.626667,
+          "weighted": 4.048333
+        },
+        "5": {
+          "count": 20,
+          "points": 6.893333,
+          "weighted": 6.031667
+        },
+        "6": {
+          "count": 18,
+          "points": 5.786667,
+          "weighted": 5.063333
+        }
+      },
       "file": "0023.json"
     },
     {
@@ -377,6 +1082,49 @@
         6,
         7
       ],
+      "weight": 8,
+      "metrics": {
+        "0": {
+          "count": 44,
+          "points": 21.714286,
+          "weighted": 21.714286
+        },
+        "1": {
+          "count": 2,
+          "points": 0.247619,
+          "weighted": 0.247619
+        },
+        "2": {
+          "count": 2,
+          "points": 0.247619,
+          "weighted": 0.247619
+        },
+        "3": {
+          "count": 2,
+          "points": 0.247619,
+          "weighted": 0.247619
+        },
+        "4": {
+          "count": 2,
+          "points": 0.247619,
+          "weighted": 0.247619
+        },
+        "5": {
+          "count": 2,
+          "points": 0.247619,
+          "weighted": 0.247619
+        },
+        "6": {
+          "count": 2,
+          "points": 0.247619,
+          "weighted": 0.247619
+        },
+        "7": {
+          "count": 71,
+          "points": 44.0,
+          "weighted": 44.0
+        }
+      },
       "file": "0024.json"
     },
     {
@@ -395,6 +1143,49 @@
         6,
         7
       ],
+      "weight": 8,
+      "metrics": {
+        "0": {
+          "count": 37,
+          "points": 14.221905,
+          "weighted": 14.221905
+        },
+        "1": {
+          "count": 21,
+          "points": 3.475238,
+          "weighted": 3.475238
+        },
+        "2": {
+          "count": 28,
+          "points": 7.141905,
+          "weighted": 7.141905
+        },
+        "3": {
+          "count": 19,
+          "points": 3.115238,
+          "weighted": 3.115238
+        },
+        "4": {
+          "count": 20,
+          "points": 3.995238,
+          "weighted": 3.995238
+        },
+        "5": {
+          "count": 17,
+          "points": 2.208571,
+          "weighted": 2.208571
+        },
+        "6": {
+          "count": 22,
+          "points": 4.781905,
+          "weighted": 4.781905
+        },
+        "7": {
+          "count": 31,
+          "points": 13.06,
+          "weighted": 13.06
+        }
+      },
       "file": "0025.json"
     },
     {
@@ -413,6 +1204,49 @@
         6,
         7
       ],
+      "weight": 8,
+      "metrics": {
+        "0": {
+          "count": 22,
+          "points": 7.966667,
+          "weighted": 7.966667
+        },
+        "1": {
+          "count": 14,
+          "points": 3.993333,
+          "weighted": 3.993333
+        },
+        "2": {
+          "count": 16,
+          "points": 3.993333,
+          "weighted": 3.993333
+        },
+        "3": {
+          "count": 13,
+          "points": 4.366667,
+          "weighted": 4.366667
+        },
+        "4": {
+          "count": 24,
+          "points": 12.366667,
+          "weighted": 12.366667
+        },
+        "5": {
+          "count": 16,
+          "points": 4.86,
+          "weighted": 4.86
+        },
+        "6": {
+          "count": 14,
+          "points": 3.526667,
+          "weighted": 3.526667
+        },
+        "7": {
+          "count": 31,
+          "points": 14.126667,
+          "weighted": 14.126667
+        }
+      },
       "file": "0026.json"
     },
     {
@@ -431,6 +1265,49 @@
         6,
         7
       ],
+      "weight": 8,
+      "metrics": {
+        "0": {
+          "count": 22,
+          "points": 10.514286,
+          "weighted": 10.514286
+        },
+        "1": {
+          "count": 10,
+          "points": 2.23619,
+          "weighted": 2.23619
+        },
+        "2": {
+          "count": 13,
+          "points": 3.769524,
+          "weighted": 3.769524
+        },
+        "3": {
+          "count": 9,
+          "points": 1.83619,
+          "weighted": 1.83619
+        },
+        "4": {
+          "count": 9,
+          "points": 1.83619,
+          "weighted": 1.83619
+        },
+        "5": {
+          "count": 9,
+          "points": 1.942857,
+          "weighted": 1.942857
+        },
+        "6": {
+          "count": 10,
+          "points": 2.102857,
+          "weighted": 2.102857
+        },
+        "7": {
+          "count": 40,
+          "points": 22.961905,
+          "weighted": 22.961905
+        }
+      },
       "file": "0027.json"
     },
     {
@@ -449,6 +1326,49 @@
         6,
         7
       ],
+      "weight": 8,
+      "metrics": {
+        "0": {
+          "count": 31,
+          "points": 11.16,
+          "weighted": 11.16
+        },
+        "1": {
+          "count": 42,
+          "points": 15.693333,
+          "weighted": 15.693333
+        },
+        "2": {
+          "count": 26,
+          "points": 7.226667,
+          "weighted": 7.226667
+        },
+        "3": {
+          "count": 15,
+          "points": 4.253333,
+          "weighted": 4.253333
+        },
+        "4": {
+          "count": 16,
+          "points": 4.426667,
+          "weighted": 4.426667
+        },
+        "5": {
+          "count": 13,
+          "points": 3.96,
+          "weighted": 3.96
+        },
+        "6": {
+          "count": 38,
+          "points": 14.16,
+          "weighted": 14.16
+        },
+        "7": {
+          "count": 29,
+          "points": 7.92,
+          "weighted": 7.92
+        }
+      },
       "file": "0028.json"
     },
     {
@@ -467,6 +1387,49 @@
         6,
         7
       ],
+      "weight": 8,
+      "metrics": {
+        "0": {
+          "count": 18,
+          "points": 7.621905,
+          "weighted": 7.621905
+        },
+        "1": {
+          "count": 17,
+          "points": 5.517143,
+          "weighted": 5.517143
+        },
+        "2": {
+          "count": 25,
+          "points": 8.317143,
+          "weighted": 8.317143
+        },
+        "3": {
+          "count": 15,
+          "points": 4.157143,
+          "weighted": 4.157143
+        },
+        "4": {
+          "count": 11,
+          "points": 2.690476,
+          "weighted": 2.690476
+        },
+        "5": {
+          "count": 51,
+          "points": 23.050476,
+          "weighted": 23.050476
+        },
+        "6": {
+          "count": 15,
+          "points": 4.517143,
+          "weighted": 4.517143
+        },
+        "7": {
+          "count": 12,
+          "points": 4.128571,
+          "weighted": 4.128571
+        }
+      },
       "file": "0029.json"
     },
     {
@@ -486,6 +1449,54 @@
         7,
         8
       ],
+      "weight": 9,
+      "metrics": {
+        "0": {
+          "count": 27,
+          "points": 10.287619,
+          "weighted": 11.573571
+        },
+        "1": {
+          "count": 18,
+          "points": 4.881905,
+          "weighted": 5.492143
+        },
+        "2": {
+          "count": 22,
+          "points": 6.034286,
+          "weighted": 6.788571
+        },
+        "3": {
+          "count": 17,
+          "points": 4.175238,
+          "weighted": 4.697143
+        },
+        "4": {
+          "count": 16,
+          "points": 3.881905,
+          "weighted": 4.367143
+        },
+        "5": {
+          "count": 20,
+          "points": 4.401905,
+          "weighted": 4.952143
+        },
+        "6": {
+          "count": 27,
+          "points": 8.727619,
+          "weighted": 9.818571
+        },
+        "7": {
+          "count": 19,
+          "points": 4.834286,
+          "weighted": 5.438571
+        },
+        "8": {
+          "count": 41,
+          "points": 18.375238,
+          "weighted": 20.672143
+        }
+      },
       "file": "0030.json"
     },
     {
@@ -500,6 +1511,29 @@
         6,
         8
       ],
+      "weight": 9,
+      "metrics": {
+        "0": {
+          "count": 61,
+          "points": 31.466667,
+          "weighted": 35.4
+        },
+        "1": {
+          "count": 2,
+          "points": 0.533333,
+          "weighted": 0.6
+        },
+        "6": {
+          "count": 5,
+          "points": 2.4,
+          "weighted": 2.7
+        },
+        "8": {
+          "count": 78,
+          "points": 44.0,
+          "weighted": 49.5
+        }
+      },
       "file": "0031.json"
     },
     {
@@ -519,6 +1553,54 @@
         7,
         8
       ],
+      "weight": 9,
+      "metrics": {
+        "0": {
+          "count": 20,
+          "points": 6.733333,
+          "weighted": 7.575
+        },
+        "1": {
+          "count": 20,
+          "points": 6.693333,
+          "weighted": 7.53
+        },
+        "2": {
+          "count": 23,
+          "points": 9.76,
+          "weighted": 10.98
+        },
+        "3": {
+          "count": 23,
+          "points": 8.333333,
+          "weighted": 9.375
+        },
+        "4": {
+          "count": 25,
+          "points": 9.893333,
+          "weighted": 11.13
+        },
+        "5": {
+          "count": 16,
+          "points": 4.4,
+          "weighted": 4.95
+        },
+        "6": {
+          "count": 30,
+          "points": 11.56,
+          "weighted": 13.005
+        },
+        "7": {
+          "count": 16,
+          "points": 4.066667,
+          "weighted": 4.575
+        },
+        "8": {
+          "count": 33,
+          "points": 14.56,
+          "weighted": 16.38
+        }
+      },
       "file": "0032.json"
     },
     {
@@ -528,6 +1610,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0033.json"
     },
     {
@@ -537,6 +1621,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0034.json"
     },
     {
@@ -546,6 +1632,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0035.json"
     },
     {
@@ -555,6 +1643,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0036.json"
     },
     {
@@ -564,6 +1654,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0037.json"
     },
     {
@@ -573,6 +1665,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0038.json"
     },
     {
@@ -582,6 +1676,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0039.json"
     },
     {
@@ -591,6 +1687,8 @@
       "panelCount": 1,
       "appearances": 0,
       "characters": [],
+      "weight": 9,
+      "metrics": {},
       "file": "0040.json"
     }
   ]

@@ -357,14 +357,18 @@ test('新增槽位后槽位条变长', () => {
   store.actions.deletePanel(chapter.id, created.id);
 });
 
-test('新建一话会自动展开并带一个空槽位', () => {
-  const created = store.actions.addChapter(null);
+test('新建一话会追加到末尾、折叠其他话并带一个空槽位', () => {
+  const created = store.actions.addChapter(store.state.db.chapters[0].id);
   assert.strictEqual(store.state.db.chapters.length, 4);
-  assert.ok(store.state.openIds[created.id]);
+  assert.strictEqual(store.state.db.chapters[3].id, created.id, '应固定在末尾');
+  assert.strictEqual(created.no, 4);
+  assert.deepStrictEqual(Object.keys(store.state.openIds), [created.id], '只展开新建的话');
+  assert.strictEqual(store.state.activeChapterId, created.id);
   assert.strictEqual(created.panels.length, 1);
   ui.render();
   assert.ok(doc.getElementById('view-entry').innerHTML.includes('第 4 话'));
   store.actions.deleteChapter(created.id);
+  store.state.openIds = {};
 });
 
 test('对换两话后编号自动修正', () => {

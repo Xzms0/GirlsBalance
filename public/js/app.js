@@ -210,10 +210,8 @@
       case 'view': return;
       /* 话 */
       case 'new-chapter': {
-        var after = state.activeChapterId;
-        var created = store.actions.addChapter(after);
-        ui.toast('已新建第 ' + created.no + ' 话' + (after ? '（插在第 ' + model.findChapter(state.db, after).no + ' 话后面）' : ''),
-          'ok');
+        var created = store.actions.addChapter();
+        ui.toast('已新建第 ' + created.no + ' 话，其他话已折叠', 'ok');
         ui.scrollToChapter(created.id);      // 列表很长时也要能立刻看到它
         ui.setFocus('title-' + created.id);
         return;

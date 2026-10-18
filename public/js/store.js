@@ -286,17 +286,18 @@
    * 便捷数据操作（供 UI 调用）
    * ------------------------------------------------------------------ */
   var actions = {
-    addChapter: function (afterId) {
+    addChapter: function () {
       var created = null;
       mutate(function (db) {
         var chapter = model.newChapter(db.chapters.length + 1, '');
         chapter.panels = [model.newPanel()];
-        var index = afterId ? model.indexOfChapter(db, afterId) : db.chapters.length - 1;
-        if (index >= 0 && index < db.chapters.length - 1) db.chapters.splice(index + 1, 0, chapter);
-        else db.chapters.push(chapter);
+        // 新记录固定追加到最末尾，不插在当前选中话后面
+        db.chapters.push(chapter);
         created = chapter;
       }, { label: '新增一话' });
       if (created) {
+        // 折叠其它所有话，只展开新建的这一话
+        state.openIds = {};
         state.openIds[created.id] = true;
         state.activeChapterId = created.id;
         state.panelOf[created.id] = created.panels[0] ? created.panels[0].id : null;

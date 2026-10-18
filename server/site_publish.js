@@ -495,6 +495,7 @@ function publishNow(database, root, message, exportOnly, doPush, force) {
 
 module.exports = {
   PublishError,
+  SITE_FORMAT_VERSION,
   buildPayload,
   writePayload,
   publishSite,
