@@ -158,7 +158,7 @@
     var manifest = state.manifest || {};
     var stats = state.stats || {};
     if (els['meta-chars']) {
-      els['meta-chars'].textContent = '更新至第 ' + num(stats.characterCount) + ' 个角色';
+      els['meta-chars'].textContent = '已记录 ' + num(stats.characterCount) + ' 个角色';
     }
     if (els['meta-chapter']) {
       els['meta-chapter'].textContent = '更新至第 ' + num(stats.lastChapter) + ' 话';
