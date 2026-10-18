@@ -1,10 +1,10 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 6619,
-  "exportedAt": "2026-10-18T09:58:33+00:00",
-  "totalChapters": 32,
-  "totalPanels": 2846,
+  "revision": 6621,
+  "exportedAt": "2026-10-18T10:01:08+00:00",
+  "totalChapters": 34,
+  "totalPanels": 2848,
   "totalAppearances": 5305,
   "maxPanels": 1478,
   "characters": [
@@ -12,55 +12,55 @@
       "char": 0,
       "name": "爱城恋太郎",
       "panels": 1478,
-      "share": 0.519325
+      "share": 0.518961
     },
     {
       "char": 2,
       "name": "院田唐音",
       "panels": 814,
-      "share": 0.286015
+      "share": 0.285815
     },
     {
       "char": 1,
       "name": "花园羽香里",
       "panels": 778,
-      "share": 0.273366
+      "share": 0.273174
     },
     {
       "char": 3,
       "name": "好本静",
       "panels": 552,
-      "share": 0.193956
+      "share": 0.19382
     },
     {
       "char": 4,
       "name": "荣逢凪乃",
       "panels": 488,
-      "share": 0.171469
+      "share": 0.171348
     },
     {
       "char": 5,
       "name": "药膳楠莉",
       "panels": 454,
-      "share": 0.159522
+      "share": 0.15941
     },
     {
       "char": 6,
       "name": "花园羽羽里",
       "panels": 340,
-      "share": 0.119466
+      "share": 0.119382
     },
     {
       "char": 7,
       "name": "原贺胡桃",
       "panels": 249,
-      "share": 0.087491
+      "share": 0.08743
     },
     {
       "char": 8,
       "name": "铭户芽衣",
       "panels": 152,
-      "share": 0.053408
+      "share": 0.053371
     },
     {
       "char": 9,

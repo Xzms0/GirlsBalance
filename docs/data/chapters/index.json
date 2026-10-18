@@ -1,8 +1,8 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 1,
-  "revision": 6619,
-  "exportedAt": "2026-10-18T09:58:33+00:00",
+  "revision": 6621,
+  "exportedAt": "2026-10-18T10:01:08+00:00",
   "chapters": [
     {
       "no": 1,
@@ -520,6 +520,24 @@
         8
       ],
       "file": "0032.json"
+    },
+    {
+      "no": 33,
+      "title": "",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0033.json"
+    },
+    {
+      "no": 34,
+      "title": "",
+      "note": "",
+      "panelCount": 1,
+      "appearances": 0,
+      "characters": [],
+      "file": "0034.json"
     }
   ]
 }
