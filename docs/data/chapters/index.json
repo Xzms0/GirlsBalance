@@ -2,8 +2,8 @@
   "schema": "girls_dict",
   "schemaVersion": 1,
   "formatVersion": 2,
-  "revision": 9492,
-  "exportedAt": "2026-10-18T17:23:27+00:00",
+  "revision": 10254,
+  "exportedAt": "2026-10-19T05:21:32+00:00",
   "chapters": [
     {
       "no": 1,
@@ -838,11 +838,80 @@
       },
       "file": "0044.json"
     },
-    {"no": 45, "title": "华暮同学", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0045.json"},
-    {"no": 46, "title": "鬼也心动！校内捉迷藏", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0046.json"},
-    {"no": 47, "title": "芽衣小姐的送礼大作战", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0047.json"},
-    {"no": 48, "title": "消失的傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0048.json"},
-    {"no": 49, "title": "夺回傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0049.json"},
-    {"no": 50, "title": "受疼爱的傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 11, "metrics": {}, "file": "0050.json"}
+    {
+      "no": 45,
+      "title": "华暮同学",
+      "note": "",
+      "panelCount": 95,
+      "appearances": 151,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "weight": 12,
+      "metrics": {
+        "0": {"count": 63, "points": 36.705455, "weighted": 55.058182},
+        "1": {"count": 5, "points": 1.105455, "weighted": 1.658182},
+        "2": {"count": 5, "points": 1.105455, "weighted": 1.658182},
+        "3": {"count": 3, "points": 0.305455, "weighted": 0.458182},
+        "4": {"count": 3, "points": 0.305455, "weighted": 0.458182},
+        "5": {"count": 2, "points": 0.145455, "weighted": 0.218182},
+        "6": {"count": 3, "points": 0.545455, "weighted": 0.818182},
+        "7": {"count": 2, "points": 0.145455, "weighted": 0.218182},
+        "8": {"count": 2, "points": 0.145455, "weighted": 0.218182},
+        "9": {"count": 2, "points": 0.145455, "weighted": 0.218182},
+        "10": {"count": 3, "points": 0.545455, "weighted": 0.818182},
+        "11": {"count": 58, "points": 34.8, "weighted": 52.2}
+      },
+      "file": "0045.json"
+    },
+    {
+      "no": 46,
+      "title": "鬼也心动！校内捉迷藏",
+      "note": "",
+      "panelCount": 101,
+      "appearances": 311,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "weight": 12,
+      "metrics": {
+        "0": {"count": 50, "points": 18.551804, "weighted": 27.827706},
+        "1": {"count": 32, "points": 8.191804, "weighted": 12.287706},
+        "2": {"count": 34, "points": 8.09974, "weighted": 12.14961},
+        "3": {"count": 23, "points": 4.974026, "weighted": 7.461039},
+        "4": {"count": 17, "points": 3.25974, "weighted": 4.88961},
+        "5": {"count": 24, "points": 4.09974, "weighted": 6.14961},
+        "6": {"count": 22, "points": 5.547013, "weighted": 8.320519},
+        "7": {"count": 20, "points": 4.264185, "weighted": 6.396277},
+        "8": {"count": 16, "points": 2.70101, "weighted": 4.051515},
+        "9": {"count": 25, "points": 7.668629, "weighted": 11.502944},
+        "10": {"count": 23, "points": 4.273074, "weighted": 6.40961},
+        "11": {"count": 25, "points": 9.169235, "weighted": 13.753853}
+      },
+      "file": "0046.json"
+    },
+    {
+      "no": 47,
+      "title": "芽衣小姐的送礼大作战",
+      "note": "",
+      "panelCount": 89,
+      "appearances": 168,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "weight": 12,
+      "metrics": {
+        "0": {"count": 53, "points": 23.878788, "weighted": 35.818182},
+        "1": {"count": 3, "points": 0.278788, "weighted": 0.418182},
+        "2": {"count": 2, "points": 0.145455, "weighted": 0.218182},
+        "3": {"count": 3, "points": 0.278788, "weighted": 0.418182},
+        "4": {"count": 3, "points": 0.412121, "weighted": 0.618182},
+        "5": {"count": 3, "points": 0.278788, "weighted": 0.418182},
+        "6": {"count": 28, "points": 14.8, "weighted": 22.2},
+        "7": {"count": 3, "points": 0.412121, "weighted": 0.618182},
+        "8": {"count": 62, "points": 30.012121, "weighted": 45.018182},
+        "9": {"count": 3, "points": 0.278788, "weighted": 0.418182},
+        "10": {"count": 3, "points": 0.278788, "weighted": 0.418182},
+        "11": {"count": 2, "points": 0.145455, "weighted": 0.218182}
+      },
+      "file": "0047.json"
+    },
+    {"no": 48, "title": "消失的傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 12, "metrics": {}, "file": "0048.json"},
+    {"no": 49, "title": "夺回傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 12, "metrics": {}, "file": "0049.json"},
+    {"no": 50, "title": "受疼爱的傲娇", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 12, "metrics": {}, "file": "0050.json"}
   ]
 }
