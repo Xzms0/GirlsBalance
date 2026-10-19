@@ -2,8 +2,8 @@
   "schema": "girls_dict",
   "schemaVersion": 1,
   "formatVersion": 2,
-  "revision": 12157,
-  "exportedAt": "2026-10-19T10:11:00+00:00",
+  "revision": 12775,
+  "exportedAt": "2026-10-19T12:07:37+00:00",
   "chapters": [
     {
       "no": 1,
@@ -1188,6 +1188,151 @@
         "13": {"count": 16, "points": 4.904156, "weighted": 8.582273}
       },
       "file": "0059.json"
-    }
+    },
+    {
+      "no": 60,
+      "title": "男孩子气的女友",
+      "note": "",
+      "panelCount": 76,
+      "appearances": 128,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "weight": 14,
+      "metrics": {
+        "0": {"count": 45, "points": 21.314286, "weighted": 37.3},
+        "1": {"count": 1, "points": 0.16, "weighted": 0.28},
+        "2": {"count": 1, "points": 0.16, "weighted": 0.28},
+        "3": {"count": 1, "points": 0.114286, "weighted": 0.2},
+        "4": {"count": 2, "points": 0.333333, "weighted": 0.583333},
+        "5": {"count": 1, "points": 0.114286, "weighted": 0.2},
+        "6": {"count": 2, "points": 0.274286, "weighted": 0.48},
+        "7": {"count": 2, "points": 0.333333, "weighted": 0.583333},
+        "8": {"count": 2, "points": 0.314286, "weighted": 0.55},
+        "9": {"count": 64, "points": 36.514286, "weighted": 63.9},
+        "10": {"count": 1, "points": 0.16, "weighted": 0.28},
+        "11": {"count": 1, "points": 0.114286, "weighted": 0.2},
+        "12": {"count": 2, "points": 0.333333, "weighted": 0.583333},
+        "13": {"count": 3, "points": 0.56, "weighted": 0.98}
+      },
+      "file": "0060.json"
+    },
+    {
+      "no": 61,
+      "title": "第一次购物回",
+      "note": "",
+      "panelCount": 101,
+      "appearances": 234,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "weight": 14,
+      "metrics": {
+        "0": {"count": 47, "points": 19.190476, "weighted": 33.583333},
+        "1": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "2": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "3": {"count": 55, "points": 17.590476, "weighted": 30.783333},
+        "4": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "5": {"count": 57, "points": 19.057143, "weighted": 33.35},
+        "6": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "7": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "8": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "9": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "10": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "11": {"count": 1, "points": 0.057143, "weighted": 0.1},
+        "12": {"count": 65, "points": 24.390476, "weighted": 42.683333},
+        "13": {"count": 1, "points": 0.057143, "weighted": 0.1}
+      },
+      "file": "0061.json"
+    },
+    {
+      "no": 62,
+      "title": "恋太郎家族的偶像化计划",
+      "note": "",
+      "panelCount": 70,
+      "appearances": 237,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "weight": 14,
+      "metrics": {
+        "0": {"count": 8, "points": 2.957143, "weighted": 5.175},
+        "1": {"count": 19, "points": 4.308425, "weighted": 7.539744},
+        "2": {"count": 20, "points": 4.465568, "weighted": 7.814744},
+        "3": {"count": 17, "points": 3.508425, "weighted": 6.139744},
+        "4": {"count": 13, "points": 1.865568, "weighted": 3.264744},
+        "5": {"count": 13, "points": 1.732234, "weighted": 3.03141},
+        "6": {"count": 28, "points": 10.241758, "weighted": 17.923077},
+        "7": {"count": 18, "points": 4.598901, "weighted": 8.048077},
+        "8": {"count": 15, "points": 3.065568, "weighted": 5.364744},
+        "9": {"count": 14, "points": 2.465568, "weighted": 4.314744},
+        "10": {"count": 14, "points": 2.532234, "weighted": 4.43141},
+        "11": {"count": 16, "points": 3.441758, "weighted": 6.023077},
+        "12": {"count": 18, "points": 3.441758, "weighted": 6.023077},
+        "13": {"count": 24, "points": 7.375092, "weighted": 12.90641}
+      },
+      "file": "0062.json"
+    },
+    {
+      "no": 63,
+      "title": "一起登上全新的舞台吧",
+      "note": "",
+      "panelCount": 48,
+      "appearances": 191,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "weight": 14,
+      "metrics": {
+        "0": {"count": 20, "points": 14.590476, "weighted": 25.533333},
+        "1": {"count": 16, "points": 2.788278, "weighted": 4.879487},
+        "2": {"count": 13, "points": 2.21304, "weighted": 3.872821},
+        "3": {"count": 13, "points": 1.519707, "weighted": 2.659487},
+        "4": {"count": 13, "points": 1.327326, "weighted": 2.322821},
+        "5": {"count": 12, "points": 2.033993, "weighted": 3.559487},
+        "6": {"count": 12, "points": 1.167326, "weighted": 2.042821},
+        "7": {"count": 14, "points": 1.700659, "weighted": 2.976154},
+        "8": {"count": 12, "points": 1.774945, "weighted": 3.106154},
+        "9": {"count": 14, "points": 2.081612, "weighted": 3.642821},
+        "10": {"count": 14, "points": 1.620659, "weighted": 2.836154},
+        "11": {"count": 14, "points": 2.073993, "weighted": 3.629487},
+        "12": {"count": 13, "points": 2.473993, "weighted": 4.329487},
+        "13": {"count": 11, "points": 1.033993, "weighted": 1.809487}
+      },
+      "file": "0063.json"
+    },
+    {
+      "no": 64,
+      "title": "优敷同学",
+      "note": "",
+      "panelCount": 85,
+      "appearances": 112,
+      "characters": [0, 9, 14],
+      "weight": 15,
+      "metrics": {"0": {"count": 47, "points": 26.8, "weighted": 50.25}, "9": {"count": 1, "points": 0.4, "weighted": 0.75}, "14": {"count": 64, "points": 40.8, "weighted": 76.5}},
+      "file": "0064.json"
+    },
+    {
+      "no": 65,
+      "title": "山女的园艺部之旅",
+      "note": "",
+      "panelCount": 80,
+      "appearances": 280,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+      "weight": 15,
+      "metrics": {
+        "0": {"count": 32, "points": 13.24, "weighted": 24.825},
+        "1": {"count": 19, "points": 3.629744, "weighted": 6.805769},
+        "2": {"count": 14, "points": 1.869744, "weighted": 3.505769},
+        "3": {"count": 18, "points": 2.283077, "weighted": 4.280769},
+        "4": {"count": 17, "points": 3.429744, "weighted": 6.430769},
+        "5": {"count": 19, "points": 2.61641, "weighted": 4.905769},
+        "6": {"count": 18, "points": 3.89641, "weighted": 7.305769},
+        "7": {"count": 18, "points": 3.89641, "weighted": 7.305769},
+        "8": {"count": 13, "points": 1.77641, "weighted": 3.330769},
+        "9": {"count": 12, "points": 1.029744, "weighted": 1.930769},
+        "10": {"count": 11, "points": 1.043077, "weighted": 1.955769},
+        "11": {"count": 12, "points": 1.33641, "weighted": 2.505769},
+        "12": {"count": 20, "points": 3.109744, "weighted": 5.830769},
+        "13": {"count": 14, "points": 1.989744, "weighted": 3.730769},
+        "14": {"count": 43, "points": 18.853333, "weighted": 35.35}
+      },
+      "file": "0065.json"
+    },
+    {"no": 66, "title": "来吧…黑暗游戏开始了哦！", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 15, "metrics": {}, "file": "0066.json"},
+    {"no": 67, "title": "海獭锅相扑大会（海獭的风评被害）", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 15, "metrics": {}, "file": "0067.json"},
+    {"no": 68, "title": "再见海獭锅相扑大会", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 15, "metrics": {}, "file": "0068.json"}
   ]
 }
