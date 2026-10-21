@@ -23,6 +23,7 @@
     metric: 'count',
     sort: 'char',
     order: 'asc',
+    scope: 'all',
     startChar: 'all',
     loading: false,
   };
@@ -83,7 +84,7 @@
 
   function setLoading(value) {
     state.loading = value;
-    ['metric', 'sort', 'start-char'].forEach(function (id) {
+    ['metric', 'sort', 'scope', 'start-char'].forEach(function (id) {
       if (els[id]) els[id].disabled = value;
     });
   }
@@ -235,7 +236,11 @@
   function renderChart() {
     if (!els.chart) return;
     var rows = currentRows()
-      .filter(function (item) { return Number(item.count) > 0; })
+      .filter(function (item) { 
+        if(state.scope === 'only' && Number(item.char) === 0) {
+          return false;
+        }
+        return Number(item.count) > 0; })
       .map(function (item) {
         return {
           char: item.char,
@@ -293,7 +298,7 @@
     els.revision = $('revision');
     els.metric = $('metric');
     els.sort = $('sort');
-    els.order = $('order');
+    els.scope = $('scope');
     els['start-char'] = $('start-char');
     els.chart = $('chart');
     els.empty = $('empty');
@@ -315,9 +320,9 @@
         renderChart();
       });
     }
-    if (els.order) {
-      els.order.addEventListener('change', function () {
-        state.order = els.order.value;
+    if (els.scope) {
+      els.scope.addEventListener('change', function () {
+        state.scope = els.scope.value;
         renderChart();
       });
     }
