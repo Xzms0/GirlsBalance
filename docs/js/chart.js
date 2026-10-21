@@ -83,7 +83,7 @@
 
   function setLoading(value) {
     state.loading = value;
-    ['metric', 'sort', 'order', 'start-char'].forEach(function (id) {
+    ['metric', 'sort', 'start-char'].forEach(function (id) {
       if (els[id]) els[id].disabled = value;
     });
   }
@@ -307,6 +307,11 @@
     if (els.sort) {
       els.sort.addEventListener('change', function () {
         state.sort = els.sort.value;
+        if(state.sort === 'char') {
+          state.order = 'asc';
+        } else {
+          state.order = 'desc';
+        }
         renderChart();
       });
     }
