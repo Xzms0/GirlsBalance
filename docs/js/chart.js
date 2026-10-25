@@ -18,6 +18,11 @@
   var DATA_FORMAT = 4;
   var DENSITY_ALPHA = 0.5;   // composite_share 的指数，来自原统计脚本
   var POINTS_TO_SHARE = 1 / 0.8;  // points 已整体除以 10；份额 = points / 0.8
+
+  // 条形长度算法。以后想换回旧效果，只改这一行：
+  //   'min10' —— 最小值固定占 10%，最大值占 100%，中间线性（当前默认）
+  //   'ratio' —— 旧版逻辑：value / max × 100，最小值可能贴近 0
+  var BAR_SCALE_MODE = 'ratio';
   var FALLBACK_COLORS = ['#5eead4', '#fbbf24', '#fb7185', '#60a5fa', '#a78bfa', '#34d399', '#f97316', '#e879f9'];
 
   var state = {
@@ -63,6 +68,18 @@
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     });
+  }
+
+  /**
+   * 计算条形宽度（百分比）。两种算法由文件顶部的 BAR_SCALE_MODE 决定：
+   *   min10（当前）：最小值 10、最大值 100，中间线性；所有值相等时统一 100。
+   *   ratio（旧版）：value / max × 100；max ≤ 0 时宽度为 0。
+   */
+  function barWidth(value, min, max) {
+    if (max <= 0) return 0;
+    if (BAR_SCALE_MODE === 'ratio') return (value / max) * 100;
+    if (max === min) return 100;
+    return 10 + ((value - min) / (max - min)) * 90;
   }
 
   function formatDateOnly(iso) {
@@ -327,19 +344,14 @@
       return state.order === 'asc' ? a.char - b.char : b.char - a.char;
     });
 
-    // 条形长度：最小值固定占 10%，最大值占满 100%，中间线性映射。
-    // 所有值相同时没有可比较的区间，按最大值处理（100%）。
+    // 条形长度统一由 barWidth() 计算；算法切换见文件顶部的 BAR_SCALE_MODE。
+    // 这里只负责取当前列的 min/max，两种模式共用。
     var values = rows.map(function (item) { return item.value; });
     var max = Math.max.apply(null, values);
     var min = Math.min.apply(null, values);
-    var widthOf = function (value) {
-      if (max <= 0) return 0;
-      if (max === min) return 100;
-      return 10 + ((value - min) / (max - min)) * 90;
-    };
 
     els.chart.innerHTML = rows.map(function (item) {
-      var width = widthOf(item.value);
+      var width = barWidth(item.value, min, max);
       var color = colorFor(item.char);
       var name = item.name || '';
       var label = '角色 ' + item.char + (item.name ? ' ' + item.name : '') +
