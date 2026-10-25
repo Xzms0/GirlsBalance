@@ -53,8 +53,6 @@ python3 server/server.py --port 8777 --open
 
 + 发布时会跳过“只有标题/空分镜、没有任何角色”的占位话；`lastChapter` 取最后一条真正有角色数据的话。
 
-+ 条形图比例：当前统计值的最小值固定占 10%，最大值占满 100%，中间线性排布；所有值相同时均显示 100%。
-
 + 每个角色的颜色来自 [`docs/colors.json`](docs/colors.json)，可直接编辑
 
 
