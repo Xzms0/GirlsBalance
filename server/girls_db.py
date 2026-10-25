@@ -1051,7 +1051,7 @@ class GirlsDB:
 
     def _import_into(self, conn: sqlite3.Connection, source: Path) -> Dict[str, Any]:
         """把一份 JSON 文件写进当前连接（调用方负责事务）。"""
-        parsed = json.loads(source.read_text(encoding="utf-8"))
+        parsed = json.loads(source.read_text(encoding="utf-8-sig"))
         document = normalize_document(_require_export_document(parsed), [], self.title)
         conn.execute("BEGIN IMMEDIATE")
         try:

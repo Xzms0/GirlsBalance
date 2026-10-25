@@ -12,13 +12,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "server"))
 
-from girls_db import GirlsDB  # noqa: E402
+from girls_db import GirlsDB, ValidationError  # noqa: E402
 from site_publish import publish_site  # noqa: E402
 
 
@@ -38,15 +39,21 @@ def main(argv=None) -> int:
         return 2
 
     database = GirlsDB(data_file, backup_interval=0)
-    database.initialize()
-    result = publish_site(
-        database,
-        ROOT,
-        message=args.message,
-        export_only=args.export_only,
-        push=not args.no_push,
-        force=args.force,
-    )
+    try:
+        database.initialize()
+        result = publish_site(
+            database,
+            ROOT,
+            message=args.message,
+            export_only=args.export_only,
+            push=not args.no_push,
+            force=args.force,
+        )
+    except (ValidationError, OSError, sqlite3.Error) as error:
+        print(f"无法打开数据库：{error}", file=sys.stderr)
+        return 2
+    finally:
+        database.close()
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result.get("ok") else 1
 

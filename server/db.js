@@ -1090,7 +1090,8 @@ class GirlsDB {
 
   /** 把一份 JSON 文件写进当前连接（调用方负责事务）。 */
   importInto(conn, sourcePath) {
-    const parsed = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+    const text = fs.readFileSync(sourcePath, 'utf8').replace(/^\uFEFF/, '');
+    const parsed = JSON.parse(text);
     const document = normalizeDocument(requireExportDocument(parsed), [], this.title);
     conn.exec('BEGIN IMMEDIATE');
     let revision;

@@ -814,6 +814,13 @@ test('file import is strict and never archives or reads neighboring JSON automat
   assert.strictEqual(fs.existsSync(path.join(dir, 'legacy')), false);
   fs.writeFileSync(source, '');
   assert.throws(() => database.importJson(source), SyntaxError);
+  // Windows 编辑器常带 BOM；BOM 只是编码记号，内容仍走同一严格校验。
+  const bomSource = path.join(dir, 'bom.json');
+  fs.writeFileSync(bomSource, '\uFEFF' + JSON.stringify(db.stripIds(readSample())));
+  const bomDatabase = new db.GirlsDB(path.join(dir, 'bom.sqlite3'), {backupInterval: 0});
+  bomDatabase.initialize();
+  bomDatabase.importJson(bomSource);
+  assert.strictEqual(bomDatabase.loadDocument().chapters.length, 3);
   for (const version of [null, '1', '999']) {
     database.withConnection(conn => version === null ? conn.prepare("DELETE FROM info WHERE key='schema_version'").run() : database.setInfo(conn, 'schema_version', version));
     assert.throws(() => database.initialize(), db.ValidationError);

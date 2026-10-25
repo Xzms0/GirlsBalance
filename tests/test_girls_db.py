@@ -81,6 +81,21 @@ class TestCleanChars(TempDirCase):
 
 
 class TestSchema(TempDirCase):
+    def test_schema_file_is_executable_sql(self) -> None:
+        """README 里给出的 `sqlite3 db < schema/girls_dict.sql` 必须真的能执行。"""
+        connection = sqlite3.connect(":memory:")
+        try:
+            connection.executescript((ROOT / "schema" / "girls_dict.sql").read_text(encoding="utf-8"))
+            tables = {row[0] for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type IN ('table','index')")}
+            version = connection.execute("SELECT value FROM info WHERE key='schema_version'").fetchone()[0]
+        finally:
+            connection.close()
+        for name in ("info", "chapter", "panel", "panel_char", "char_name", "change_log",
+                     "idx_panel_chapter", "idx_panel_char_char"):
+            self.assertIn(name, tables)
+        self.assertEqual(int(version), STORAGE_VERSION)
+
     def test_creates_tables_and_info(self) -> None:
         database = self.make_db()
         connection = database.connect()
@@ -476,6 +491,14 @@ class TestStrictBoundary(TempDirCase):
             GirlsDB(self.path, legacy_json=None)
         with self.assertRaises(TypeError):
             database.replace_all(database.load_document(), strict=True)
+
+    def test_file_import_accepts_utf8_bom(self):
+        """Windows 编辑器常带 BOM；BOM 只是编码记号，仍按同一严格格式校验。"""
+        source = self.dir / "bom.json"
+        source.write_bytes(b"\xef\xbb\xbf" + json.dumps(sample_document()).encode("utf-8"))
+        database = self.make_db()
+        database.import_json(source)
+        self.assertEqual(database.load_index()["stats"]["panels"], 10)
 
     def test_existing_storage_never_repaired(self):
         database = self.make_db()

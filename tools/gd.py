@@ -32,19 +32,19 @@ from typing import Any, Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "server"))
 
 from girls_db import (  # noqa: E402
-    CHAR_MAX,
-    CHAR_MIN,
     GirlsDB,
     OpError,
     RevisionConflict,
     ValidationError,
     clean_chars,
-    normalize_document,
     new_id,
+    validate_export_document,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA = ROOT / "data" / "girls_dict.sqlite3"
+# `set` 允许自动补空槽位，但必须挡住手滑输入的超大下标（例如把 10 打成 100000000）。
+MAX_PANEL_INDEX = 10000
 
 
 def harden_stdio() -> None:
@@ -92,7 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_swap.add_argument("a", type=int)
     p_swap.add_argument("b", type=int)
 
-    p_renumber = sub.add_parser("renumber", help="按当前顺序重排话编号")
+    sub.add_parser("renumber", help="按当前顺序重排话编号")
 
     p_backup = sub.add_parser("backup", help="立即创建快照")
     p_backup.add_argument("--tag", default="")
@@ -118,11 +118,46 @@ def chapter_by_no(database: GirlsDB, no: int) -> Optional[Dict[str, Any]]:
     return None
 
 
+def run_import(args: argparse.Namespace) -> int:
+    """先校验文件、再初始化数据库；避免无效输入留下一个新建的空库。"""
+    source = Path(args.source)
+    if not source.is_file():
+        print(f"找不到文件：{source}", file=sys.stderr)
+        return 1
+    try:
+        # utf-8-sig 顺带接受 Windows 编辑器常见的 UTF-8 BOM。
+        payload = json.loads(source.read_text(encoding="utf-8-sig"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        print(f"导入失败：{source} 不是合法的 UTF-8 JSON（{error}）", file=sys.stderr)
+        return 1
+    issues = validate_export_document(payload)
+    if issues:
+        print(f"导入失败：{source} 不符合当前格式（需要 schemaVersion=2，且不含内部 id）", file=sys.stderr)
+        for item in issues[:10]:
+            print(f"  - {item['path']}: {item['message']}", file=sys.stderr)
+        if len(issues) > 10:
+            print(f"  ……另有 {len(issues) - 10} 处问题", file=sys.stderr)
+        return 1
+    database = GirlsDB(args.data, backup_interval=0)
+    try:
+        database.initialize()
+        result = database.import_json(payload)
+    finally:
+        database.close()
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
+    command = args.command
+
+    # 导入走独立入口：文件校验失败时不应创建/改动数据库。
+    if command == "import":
+        return run_import(args)
+
     database = GirlsDB(args.data, backup_interval=0)
     database.initialize()
-    command = args.command
 
     if command == "info":
         index = database.load_index()
@@ -181,6 +216,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             return 2
         connection = database.connect()
         try:
+            # SQLite 的 query_only 会拒绝一切写入，也包括 PRAGMA xxx=yyy 这类
+            # 看着像查询、实际会改库的语句，保证这里的“只读”名副其实。
+            connection.execute("PRAGMA query_only = ON")
             cursor = connection.execute(query)
             rows = [dict(row) for row in cursor.fetchmany(max(1, args.limit))]
             columns = [d[0] for d in cursor.description or []]
@@ -224,7 +262,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if command == "add-chapter":
         panels = [{"id": new_id("pn"), "chars": []} for _ in range(max(0, args.panels))]
-        result = database.apply_patch([{
+        database.apply_patch([{
             "op": "chapter.upsert",
             "chapter": {"id": new_id("ch"), "title": args.title, "note": ""},
             "panels": panels,
@@ -242,13 +280,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.panel < 1:
             print("槽位编号从 1 开始", file=sys.stderr)
             return 1
+        if args.panel > MAX_PANEL_INDEX:
+            print(f"槽位编号过大：上限为 {MAX_PANEL_INDEX}", file=sys.stderr)
+            return 1
+        chars_issues: List[Dict[str, str]] = []
         ops: List[Dict[str, Any]] = []
         for index in range(len(panels), args.panel):
             panels.append({"id": new_id("pn"), "chars": []})
             ops.append({"op": "panel.upsert", "chapterId": chapter["id"],
                         "panel": {"id": panels[index]["id"], "chars": []}, "position": index + 1})
         target = panels[args.panel - 1]
-        ops.append({"op": "panel.chars", "panelId": target["id"], "chars": clean_chars(args.chars)})
+        chars = clean_chars(args.chars, chars_issues)
+        for item in chars_issues:
+            print(f"警告：{item['message']}", file=sys.stderr)
+        ops.append({"op": "panel.chars", "panelId": target["id"], "chars": chars})
         database.apply_patch(ops, label="cli:set")
         updated = chapter_by_no(database, args.chapter)
         print(f"第 {args.chapter} 话 · 槽位 {args.panel} = {updated['panels'][args.panel - 1]['chars']}")
@@ -296,15 +341,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"已回滚到 {args.name}，当前 revision={result['revision']}")
         return 0
 
-    if command == "import":
-        source = Path(args.source)
-        if not source.is_file():
-            print(f"找不到文件：{source}", file=sys.stderr)
-            return 1
-        result = database.import_json(source)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0
-
     print(f"未知命令：{command}", file=sys.stderr)
     return 2
 
@@ -314,5 +350,14 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except (RevisionConflict, OpError, ValidationError) as error:
+        print(f"执行失败：{error}", file=sys.stderr)
+        raise SystemExit(1)
+    except FileNotFoundError as error:
+        print(f"执行失败：{error}", file=sys.stderr)
+        raise SystemExit(1)
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        print(f"执行失败：不是合法的 UTF-8 JSON（{error}）", file=sys.stderr)
+        raise SystemExit(1)
+    except OSError as error:
         print(f"执行失败：{error}", file=sys.stderr)
         raise SystemExit(1)

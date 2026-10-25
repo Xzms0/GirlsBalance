@@ -1,18 +1,18 @@
-# -*- coding: utf-8 -*-
-# girls_dict（超超你的字典）SQLite 存储结构
-#
-# 这份 DDL 与 server/girls_db.py 里的 SCHEMA_SQL 完全一致，
-# 想用别的语言（Node / Go / Java / …）直接操作数据库时照抄即可：
-#
-#     sqlite3 data/girls_dict.sqlite3 < schema/girls_dict.sql
-#
-# 设计要点：
-#   * 一份数据只存一次：话在 chapter，槽位在 panel，角色编号在 panel_char；
-#   * panel_char 的主键是 (panel_id, char)，天然保证「同一分镜里同一角色只算一次」；
-#   * chapter.no 是顺序位置（1..N）并带 UNIQUE，panel.position 是话内顺序（1..M）；
-#   * 角色名单独放 char_name 表，只影响显示，数据里存的始终是编号；
-#   * 改一个槽位 = 删几行 + 插几行 panel_char，写入量与改动量成正比；
-#   * 索引让「查某个角色出现在哪」这类问题走索引而不是全表扫描。
+-- -*- coding: utf-8 -*-
+-- girls_dict（超超你的字典）SQLite 存储结构
+--
+-- 这份 DDL 与 server/girls_db.py 里的 SCHEMA_SQL 完全一致，
+-- 想用别的语言（Node / Go / Java / …）直接操作数据库时照抄即可：
+--
+--     sqlite3 data/girls_dict.sqlite3 < schema/girls_dict.sql
+--
+-- 设计要点：
+--   * 一份数据只存一次：话在 chapter，槽位在 panel，角色编号在 panel_char；
+--   * panel_char 的主键是 (panel_id, char)，天然保证「同一分镜里同一角色只算一次」；
+--   * chapter.no 是顺序位置（1..N）并带 UNIQUE，panel.position 是话内顺序（1..M）；
+--   * 角色名单独放 char_name 表，只影响显示，数据里存的始终是编号；
+--   * 改一个槽位 = 删几行 + 插几行 panel_char，写入量与改动量成正比；
+--   * 索引让「查某个角色出现在哪」这类问题走索引而不是全表扫描。
 
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = NORMAL;
