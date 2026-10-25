@@ -2,8 +2,8 @@
   "schema": "girls_dict",
   "schemaVersion": 2,
   "formatVersion": 3,
-  "revision": 16440,
-  "exportedAt": "2026-10-25T15:15:33+00:00",
+  "revision": 16441,
+  "exportedAt": "2026-10-25T15:28:01+00:00",
   "chapters": [
     {
       "no": 1,
@@ -2179,7 +2179,7 @@
       },
       "file": "0099.json"
     },
-    {"no": 100, "title": "能连载本身已经很幸福了 非常感谢每一个人 接下来我们一起继续努力吧", "note": "", "panelCount": 2, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0100.json"},
+    {"no": 100, "title": "能连载本身已经很幸福了 非常感谢每一个人 接下来我们一起继续努力吧", "note": "", "panelCount": 3, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0100.json"},
     {"no": 101, "title": "妹是芽衣姐姐的妹妹", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0101.json"},
     {"no": 102, "title": "妹的妹妹女仆课程", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0102.json"},
     {"no": 103, "title": "羽香里的发情期", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0103.json"},
