@@ -24,7 +24,7 @@
   //   'ratio' —— 旧版：value / max × 100，最小值可能贴近 0
   //   'log'   —— 对数刻度：拉开低值差距、压缩高值，适合长尾数据
   //   'sqrt'  —— 平方根刻度：介于线性和对数之间的折中
-  var BAR_SCALE_MODE = 'sqrt';
+  var BAR_SCALE_MODE = 'log';
   var FALLBACK_COLORS = ['#5eead4', '#fbbf24', '#fb7185', '#60a5fa', '#a78bfa', '#34d399', '#f97316', '#e879f9'];
 
   var state = {
