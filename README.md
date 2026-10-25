@@ -39,13 +39,21 @@ python3 server/server.py --port 8777 --open
 
 ## 公开站
 
-+ 三种统计方式：**计数**、**积分**、**加权**
++ 四种统计方式：**计数**、**积分**、**加权**、**密度**
 
   - **计数**：角色出现在多少个分镜里。
 
   - **积分**：每个分镜固定 8 分，统计结果统一除以 10（即每个分镜 0.8 分），平均分给该分镜中出现的所有角色；一个分镜有 k 个角色，每人得 `0.8 / k`。
 
   - **加权**：每一话先算出“截至这一话已经登场过的角色总数 W”（这一话新登场的角色也计入），该话每个分镜的总分就是 `W / 10`，再平均分给分镜里的 k 个角色，每人得 `W / 10 / k`。
+
+  - **密度**：份额密度。份额等于积分 `points / 0.8`；`first` 是角色首次出场的话，`last` 是最新发布话，`A` 是从 `first` 到 `last` 的分镜总数，`T` 是当前区间的分镜总数：
+    `density = (份额 / A) × (A / T) ^ 0.5 × 100`，显示为保留两位小数的百分数。
+    选择“起始角色”后，区间从该角色首次登场的话开始，`T`、`A` 会按区间重新计算。
+
++ 发布时会跳过“只有标题/空分镜、没有任何角色”的占位话；`lastChapter` 取最后一条真正有角色数据的话。
+
++ 条形图比例：当前统计值的最小值固定占 10%，最大值占满 100%，中间线性排布；所有值相同时均显示 100%。
 
 + 每个角色的颜色来自 [`docs/colors.json`](docs/colors.json)，可直接编辑
 
@@ -91,7 +99,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 {
   "schema": "girls_dict",
   "schemaVersion": 2,
-  "formatVersion": 3,
+  "formatVersion": 4,
   "revision": 6642,
   "exportedAt": "2026-10-18T13:22:04+00:00",
   "totalChapters": 41,
@@ -102,6 +110,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   "maxCount": 1478,
   "maxPoints": 731.4,
   "maxWeighted": 524.1,
+  "maxDensity": 30.5,
   "characters": [
     {
       "char": 0,
@@ -109,11 +118,14 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
       "count": 1478,
       "points": 731.4,
       "weighted": 524.1,
+      "density": 30.5,
       "firstChapter": 1
     }
   ]
 }
 ```
+
+`density` / `maxDensity` 是百分数（如 `30.5` 表示 30.5%），保留两位小数。只有含角色数据的章节会出现在公开分片里；`totalChapters`、`totalPanels`、`lastChapter` 都按发布章节计算。
 
 `docs/data/manifest.json`
 
@@ -121,7 +133,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 {
   "schema": "girls_dict",
   "schemaVersion": 2,
-  "formatVersion": 3,
+  "formatVersion": 4,
   "revision": 6642,
   "exportedAt": "2026-10-18T13:22:04+00:00",
   "title": "超超你的字典",
@@ -137,7 +149,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 {
   "schema": "girls_dict",
   "schemaVersion": 2,
-  "formatVersion": 3,
+  "formatVersion": 4,
   "revision": 6642,
   "chapters": [
     {
@@ -163,7 +175,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 {
   "schema": "girls_dict",
   "schemaVersion": 2,
-  "formatVersion": 3,
+  "formatVersion": 4,
   "no": 1,
   "title": "相遇",
   "note": "",
@@ -231,7 +243,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 - `GET /api/db/export?format=json|csv|sqlite`：导出；JSON 文本统一通过此接口读取。
 - `GET /api/backups`、`POST /api/backups`、`POST /api/backups/restore`：快照列表、创建与恢复。
 
-命令行导入：`python tools/gd.py import current.json`。程序不再提供自动迁移、迁移参数或旧字段别名。公开分片使用 `schemaVersion: 2`、`formatVersion: 3`，角色计数只保留 `count`，最大计数只保留 `maxCount`。
+命令行导入：`python tools/gd.py import current.json`。程序不再提供自动迁移、迁移参数或旧字段别名。公开分片使用 `schemaVersion: 2`、`formatVersion: 4`，角色计数只保留 `count`，最大计数只保留 `maxCount`，并包含 `density` / `maxDensity`。
 
 ### CSV 导出
 

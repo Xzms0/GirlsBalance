@@ -21,7 +21,7 @@ const DATA_DIR = path.join(SITE_DIR, 'data');
 const CHAPTER_DIR = path.join(DATA_DIR, 'chapters');
 const GIT_TIMEOUT = 90000;
 const MAX_OUTPUT = 4000;
-const SITE_FORMAT_VERSION = 3;
+const SITE_FORMAT_VERSION = 4;
 const DEFAULT_MESSAGE = 'data: rev {revision}（{chapters} 话 / {panels} 分镜）';
 
 let busy = false;
@@ -70,6 +70,12 @@ function buildPayload(document, revision) {
       chars.forEach((char) => chapterChars.add(char));
     });
 
+    const chapterAppearances = panelRows.reduce((sum, panel) => sum + panel.chars.length, 0);
+    if (chapterAppearances === 0) {
+      // 只有标题和空分镜的占位话不进入公开数据（数据库里仍保留）。
+      return;
+    }
+
     const characters = Array.from(chapterChars).sort((a, b) => a - b);
     characters.forEach((char) => {
       if (firstChapter[char] === undefined) firstChapter[char] = no;
@@ -78,11 +84,9 @@ function buildPayload(document, revision) {
     const weight = seenChars.size;
 
     const chapterMetrics = {};
-    let chapterAppearances = 0;
     panelRows.forEach((panel) => {
       const chars = panel.chars;
       const count = chars.length;
-      chapterAppearances += count;
       if (!count) return;
       const pointEach = 8 / 10 / count;
       const weightedEach = (weight / 10) / count;
@@ -145,14 +149,34 @@ function buildPayload(document, revision) {
       count,
       points: total ? Number(total.points.toFixed(1)) : 0,
       weighted: total ? Number(total.weighted.toFixed(1)) : 0,
+      density: 0,
       firstChapter: firstChapter[char] === undefined ? null : firstChapter[char],
     });
   }
+  // 密度：份额 / 活跃跨度 × (活跃跨度 / 区间总跨度)^0.5。
+  // 跨度按“话”计算：first = 首次出场话，last = 最新发布话；
+  // 份额 = points / 0.8（公开数据里的 points 已整体除以 10）。
+  const panelsFrom = (firstNo) => chapterRows.reduce(
+    (sum, row) => sum + (row.no >= firstNo ? row.panelCount : 0), 0);
+  characters.forEach((item) => {
+    if (!item.count || item.firstChapter === null || totalPanels <= 0) {
+      item.density = 0;
+      return;
+    }
+    const active = panelsFrom(item.firstChapter);
+    if (active <= 0) {
+      item.density = 0;
+      return;
+    }
+    const share = totals[item.char].points / 0.8;
+    item.density = Number((share / active * Math.sqrt(active / totalPanels) * 100).toFixed(2));
+  });
   const characterCount = characters.filter((item) => item.count > 0).length;
   const lastChapter = chapterRows.reduce((max, row) => Math.max(max, row.no), 0);
   const maxCount = characters.reduce((max, item) => Math.max(max, item.count), 0);
   const maxPoints = characters.reduce((max, item) => Math.max(max, item.points), 0);
   const maxWeighted = characters.reduce((max, item) => Math.max(max, item.weighted), 0);
+  const maxDensity = characters.reduce((max, item) => Math.max(max, item.density), 0);
 
   const stats = {
     schema: db.SCHEMA_NAME,
@@ -160,7 +184,7 @@ function buildPayload(document, revision) {
     formatVersion: SITE_FORMAT_VERSION,
     revision,
     exportedAt,
-    totalChapters: chapters.length,
+    totalChapters: chapterRows.length,
     totalPanels,
     totalAppearances,
     characterCount,
@@ -168,6 +192,7 @@ function buildPayload(document, revision) {
     maxCount,
     maxPoints,
     maxWeighted,
+    maxDensity,
     characters,
   };
   const chapterIndex = {
@@ -187,7 +212,7 @@ function buildPayload(document, revision) {
     title: String(meta.title || '超超你的字典'),
     author: String(meta.author || ''),
     counts: {
-      chapters: chapters.length,
+      chapters: chapterRows.length,
       panels: totalPanels,
       appearances: totalAppearances,
       characters: characterCount,
@@ -371,13 +396,16 @@ function publishNow(database, root, message, exportOnly, doPush, force) {
   const document = database.loadDocument();
   const revision = Number(document.revision) || 0;
   const existing = readManifest(root);
-  const dbPanels = (document.chapters || [])
-    .reduce((total, chapter) => total + (chapter.panels || []).length, 0);
+  // 只有含角色数据的章节会发布；占位话/空分镜不计入防覆盖判断。
+  const publishedPanels = (document.chapters || []).reduce((total, chapter) => {
+    const panels = chapter.panels || [];
+    return total + (panels.some((panel) => (panel.chars || []).length > 0) ? panels.length : 0);
+  }, 0);
   const existingCounts = (existing && existing.counts) || {};
-  if (dbPanels === 0 && Number(existingCounts.panels || 0) > 0 && !force) {
+  if (publishedPanels === 0 && Number(existingCounts.panels || 0) > 0 && !force) {
     return {
       ok: false,
-      error: `当前数据库是空的，但公开数据里已经有 ${existingCounts.panels} 个分镜。` +
+      error: `当前数据库没有可发布的角色数据（只有占位话/空分镜），但公开数据里已经有 ${existingCounts.panels} 个分镜。` +
         '为防止误覆盖，已拒绝发布；确实要清空请用命令行 --force。',
       revision,
       counts: existingCounts,

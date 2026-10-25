@@ -1,9 +1,9 @@
 {
   "schema": "girls_dict",
   "schemaVersion": 2,
-  "formatVersion": 3,
+  "formatVersion": 4,
   "revision": 16441,
-  "exportedAt": "2026-10-25T15:28:01+00:00",
+  "exportedAt": "2026-10-25T16:06:58+00:00",
   "chapters": [
     {
       "no": 1,
@@ -2178,20 +2178,6 @@
         "19": {"count": 6, "points": 2.88, "weighted": 7.2}
       },
       "file": "0099.json"
-    },
-    {"no": 100, "title": "能连载本身已经很幸福了 非常感谢每一个人 接下来我们一起继续努力吧", "note": "", "panelCount": 3, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0100.json"},
-    {"no": 101, "title": "妹是芽衣姐姐的妹妹", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0101.json"},
-    {"no": 102, "title": "妹的妹妹女仆课程", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0102.json"},
-    {"no": 103, "title": "羽香里的发情期", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0103.json"},
-    {"no": 104, "title": "漂亮的100女友", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0104.json"},
-    {"no": 105, "title": "屋久VS骑士华VS恋太郎", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0105.json"},
-    {"no": 106, "title": "恋太郎家族的烤肉约会", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0106.json"},
-    {"no": 107, "title": "上头卷心菜是那个味道", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0107.json"},
-    {"no": 108, "title": "盆能寺老师是废柴人类", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0108.json"},
-    {"no": 109, "title": "恋太郎家族的认真模拟酒会", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0109.json"},
-    {"no": 110, "title": "没有摄入酒精以及和酒精有同等效果的物品", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0110.json"},
-    {"no": 111, "title": "硬要说的话，辣妹和吟游诗人的二重奏——大概吧", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0111.json"},
-    {"no": 112, "title": "美美美学姐是美丽的女主角", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0112.json"},
-    {"no": 113, "title": "高效安排春日彩灯约会", "note": "", "panelCount": 1, "appearances": 0, "characters": [], "weight": 20, "metrics": {}, "file": "0113.json"}
+    }
   ]
 }

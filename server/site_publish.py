@@ -27,7 +27,7 @@ from girls_db import (CHAR_MAX, CHAR_MIN, EXPORT_VERSION, SCHEMA_NAME, GirlsDB,
                       ValidationError, strip_ids, validate_export_document)
 from json_pretty import dumps as pretty_json
 
-SITE_FORMAT_VERSION = 3
+SITE_FORMAT_VERSION = 4
 
 SITE_DIR = Path("docs")
 DATA_DIR = SITE_DIR / "data"
@@ -78,17 +78,20 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
             panel_rows.append({"chars": chars})
             chapter_chars.update(chars)
 
+        chapter_appearances = sum(len(panel["chars"]) for panel in panel_rows)
+        if chapter_appearances == 0:
+            # 只有标题和空分镜的占位话不进入公开数据（数据库里仍保留）。
+            continue
+
         for char in chapter_chars:
             first_chapter.setdefault(char, no)
         seen_chars.update(chapter_chars)
         weight = len(seen_chars)
 
         chapter_metrics: Dict[int, Dict[str, float]] = {}
-        chapter_appearances = 0
         for panel in panel_rows:
             chars = panel["chars"]
             count = len(chars)
-            chapter_appearances += count
             if not count:
                 continue
             point_each = 8.0 / 10.0 / count
@@ -150,6 +153,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
             "count": count,
             "points": round(total["points"], 1) if total else 0.0,
             "weighted": round(total["weighted"], 1) if total else 0.0,
+            "density": 0.0,
             "firstChapter": first_chapter.get(char),
         })
     character_count = sum(1 for item in characters if item["count"] > 0)
@@ -158,13 +162,38 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
     max_points = max((item["points"] for item in characters), default=0.0)
     max_weighted = max((item["weighted"] for item in characters), default=0.0)
 
+    # 密度：份额 / 活跃跨度 × (活跃跨度 / 区间总跨度)^0.5。
+    # 跨度按“话”计算：first = 首次出场话，last = 最新发布话；
+    # 份额 = points / 0.8（公开数据里的 points 已整体除以 10）。
+    chapter_panels = {row["no"]: row["panelCount"] for row in chapter_rows}
+
+    def panels_from(first_no: int) -> int:
+        return sum(panel_count for no, panel_count in chapter_panels.items() if no >= first_no)
+
+    densities: Dict[int, float] = {}
+    for char in range(CHAR_MIN, CHAR_MAX + 1):
+        total = totals.get(char)
+        first = first_chapter.get(char)
+        if not total or total["count"] <= 0 or first is None or total_panels <= 0:
+            densities[char] = 0.0
+            continue
+        active = panels_from(first)
+        if active <= 0:
+            densities[char] = 0.0
+            continue
+        share = total["points"] / 0.8
+        densities[char] = round(share / active * (active / total_panels) ** 0.5 * 100, 2)
+    for item in characters:
+        item["density"] = densities[item["char"]]
+    max_density = max(densities.values(), default=0.0)
+
     stats = {
         "schema": SCHEMA_NAME,
         "schemaVersion": EXPORT_VERSION,
         "formatVersion": SITE_FORMAT_VERSION,
         "revision": revision,
         "exportedAt": exported_at,
-        "totalChapters": len(chapters),
+        "totalChapters": len(chapter_rows),
         "totalPanels": total_panels,
         "totalAppearances": total_appearances,
         "characterCount": character_count,
@@ -172,6 +201,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
         "maxCount": max_count,
         "maxPoints": max_points,
         "maxWeighted": max_weighted,
+        "maxDensity": max_density,
         "characters": characters,
     }
     chapter_index = {
@@ -191,7 +221,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
         "title": str(meta.get("title") or "超超你的字典"),
         "author": str(meta.get("author") or ""),
         "counts": {
-            "chapters": len(chapters),
+            "chapters": len(chapter_rows),
             "panels": total_panels,
             "appearances": total_appearances,
             "characters": character_count,
@@ -424,12 +454,17 @@ def _publish(database: GirlsDB, root: Path, message: str,
 
     document = database.load_document()
     revision = int(document.get("revision") or revision)
-    db_panels = sum(len(chapter.get("panels") or []) for chapter in document.get("chapters") or [])
+    # 只有含角色数据的章节会发布；占位话/空分镜不计入防覆盖判断。
+    published_panels = sum(
+        len(chapter.get("panels") or [])
+        for chapter in document.get("chapters") or []
+        if any(panel.get("chars") for panel in chapter.get("panels") or [])
+    )
     existing_counts = (manifest or {}).get("counts") or {}
-    if db_panels == 0 and int(existing_counts.get("panels") or 0) > 0 and not force:
+    if published_panels == 0 and int(existing_counts.get("panels") or 0) > 0 and not force:
         return {
             "ok": False,
-            "error": "当前数据库是空的，但公开数据里已经有 " +
+            "error": "当前数据库没有可发布的角色数据（只有占位话/空分镜），但公开数据里已经有 " +
                      str(existing_counts.get("panels")) +
                      " 个分镜。为防止误覆盖，已拒绝发布；确实要清空请用命令行 --force。",
             "revision": revision,

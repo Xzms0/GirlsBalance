@@ -43,7 +43,7 @@
       .then(function (response) { return response.json(); })
       .then(function (data) {
         // 每次发布前检查当前公开格式，避免不匹配的服务覆盖公开数据。
-        serverReady = !!(data && data.siteFormatVersion === 3);
+        serverReady = !!(data && data.siteFormatVersion === 4);
         if (!serverReady) {
           if (button) {
             button.title = '当前运行的服务端还是旧代码。请关闭所有旧服务进程，重新运行 start.bat 后再发布。';

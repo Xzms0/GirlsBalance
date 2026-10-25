@@ -1,7 +1,7 @@
 'use strict';
 /**
  * 公开统计页冒烟测试：用最小 DOM 桩执行 docs/js/chart.js，
- * 覆盖三种统计、排序、起始角色过滤、颜色和页脚链接。
+ * 覆盖四种统计、排序、起始角色过滤、条形比例、颜色和页脚链接。
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -121,6 +121,23 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   const valueText = (number) => number.toLocaleString('zh-CN', {
     minimumFractionDigits: 1, maximumFractionDigits: 1,
   });
+  const densityText = (number) => number.toLocaleString('zh-CN', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  }) + '%';
+  const expectedDensity = (char, start) => {
+    const chapters = index.chapters.filter((chapter) => Number(chapter.no) >= start);
+    const totalPanels = chapters.reduce((sum, chapter) => sum + chapter.panelCount, 0);
+    const item = stats.characters.find((row) => row.char === char);
+    const points = chapters.reduce((sum, chapter) => {
+      const metric = (chapter.metrics || {})[String(char)];
+      return sum + (metric ? Number(metric.points) : 0);
+    }, 0);
+    if (!points || !item || item.firstChapter == null) return null;
+    const first = Math.max(start, Number(item.firstChapter));
+    const active = chapters.reduce(
+      (sum, chapter) => sum + (Number(chapter.no) >= first ? chapter.panelCount : 0), 0);
+    return Number(((points * 1.25) / active * Math.sqrt(active / totalPanels) * 100).toFixed(2));
+  };
 
   assert.strictEqual(elements.revision.textContent, String(manifest.revision));
   const charMeta = elements['meta-chars'].textContent;
@@ -147,8 +164,22 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   elements.metric.fire('change');
   assert.ok(/\d+\.\d/.test(elements.chart.innerHTML), '加权应保留一位小数');
   assert.ok(elements.chart.innerHTML.includes(valueText(visible[0].weighted)), '加权应使用 weighted 数据');
+
+  /* 密度 */
+  elements.metric.value = 'density';
+  elements.metric.fire('change');
+  assert.ok(elements.chart.innerHTML.includes(densityText(visible[0].density)), '密度应使用 density 数据');
+  assert.ok(/\d+\.\d{2}%/.test(elements.chart.innerHTML), '密度应保留两位小数并带百分号');
+  const densityWidths = widths(elements.chart.innerHTML).map(Number);
+  assert.strictEqual(Math.max.apply(null, densityWidths), 100, '密度最大值应占满');
+  assert.strictEqual(Math.min.apply(null, densityWidths), 10, '密度最小值应占 10%');
+
+  /* 条形比例：最大值 100%，最小值 10% */
   elements.metric.value = 'count';
   elements.metric.fire('change');
+  const countWidths = widths(elements.chart.innerHTML).map(Number);
+  assert.strictEqual(Math.max.apply(null, countWidths), 100, '计数最大值应占满');
+  assert.strictEqual(Math.min.apply(null, countWidths), 10, '计数最小值应占 10%');
 
   /* 排序 */
   elements.sort.value = 'data';
@@ -175,8 +206,16 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   assert.ok(rowCount(after) > 0 && rowCount(after) <= visible.length, '过滤后仍有记录的角色都显示');
   assert.ok(!after.includes('class="rank"'), '过滤后仍无顺序号');
 
+  elements.metric.value = 'density';
+  elements.metric.fire('change');
+  const filteredDensity = expectedDensity(late.char, Number(late.firstChapter));
+  assert.ok(filteredDensity !== null, '筛选后该角色仍应有密度');
+  assert.ok(elements.chart.innerHTML.includes(densityText(filteredDensity)),
+    '筛选后密度应按起始话重新计算');
+
   /* 页面骨架 */
   assert.ok(pageHtml.includes('<h1>超超你的小站</h1>'), '标题');
+  assert.ok(pageHtml.includes('<option value="density">密度</option>'), '统计下拉应包含密度');
   assert.ok(pageHtml.includes('GIRLS BALANCE'), '英文标题');
   assert.ok(pageHtml.includes('本站用于统计漫画《超超超超超喜欢你的100个女朋友》中各角色的登场情况'), '描述');
   assert.ok(pageHtml.includes('https://github.com/Xzms0/GirlsBalance'), 'GitHub 链接');

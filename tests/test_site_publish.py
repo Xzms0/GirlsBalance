@@ -41,6 +41,7 @@ class SitePublishTest(unittest.TestCase):
         self.assertEqual(self.stats["maxCount"], 6)
         self.assertEqual(self.stats["maxPoints"], 1.9)
         self.assertEqual(self.stats["maxWeighted"], 1.1)
+        self.assertEqual(self.stats["maxDensity"], 27.39)
         self.assertNotIn("maxPanels", self.stats)
         for item in self.stats["characters"]:
             self.assertNotIn("panels", item)
@@ -48,7 +49,7 @@ class SitePublishTest(unittest.TestCase):
             data = json.loads(payload)
             self.assertEqual(data["schema"], "girls_dict")
             self.assertEqual(data["schemaVersion"], 2)
-            self.assertEqual(data["formatVersion"], 3)
+            self.assertEqual(data["formatVersion"], 4)
         self.assertEqual(len(self.stats["characters"]), 101)
         self.assertEqual(self.stats["characters"][0]["char"], 0)
         self.assertEqual(self.stats["characters"][0]["count"], 0)
@@ -80,6 +81,38 @@ class SitePublishTest(unittest.TestCase):
             (by_char[100]["count"], by_char[100]["points"], by_char[100]["weighted"], by_char[100]["firstChapter"]),
             (2, 1.2, 0.9, 3),
         )
+        self.assertEqual(
+            {char: by_char[char]["density"] for char in (1, 2, 5, 12, 23, 100)},
+            {1: 23.33, 2: 18.33, 5: 15.83, 12: 16.14, 23: 15.0, 100: 27.39},
+        )
+
+    def test_placeholder_chapters_are_not_published(self) -> None:
+        document = json.loads(json.dumps(self.document))
+        document["chapters"].append({
+            "no": len(document["chapters"]) + 1,
+            "title": "占位",
+            "note": "",
+            "panels": [{"chars": []}, {"chars": []}],
+        })
+        payload = build_payload(document, revision=7)
+        stats = json.loads(payload["stats.json"])
+        index = json.loads(payload["chapters/index.json"])
+        self.assertEqual(stats["totalChapters"], 3)
+        self.assertEqual(stats["lastChapter"], 3)
+        self.assertEqual(stats["totalPanels"], 10)
+        self.assertEqual(len(index["chapters"]), 3)
+        self.assertNotIn("chapters/0004.json", payload)
+
+    def test_placeholder_chapter_keeps_original_numbers(self) -> None:
+        document = json.loads(json.dumps(self.document))
+        document["chapters"][1]["panels"] = [{"chars": []}]
+        payload = build_payload(document, revision=7)
+        stats = json.loads(payload["stats.json"])
+        index = json.loads(payload["chapters/index.json"])
+        self.assertEqual([chapter["no"] for chapter in index["chapters"]], [1, 3])
+        self.assertEqual(stats["totalChapters"], 2)
+        self.assertEqual(stats["lastChapter"], 3)
+        self.assertNotIn("chapters/0002.json", payload)
 
     def test_chapter_index_and_files(self) -> None:
         self.assertEqual(len(self.index["chapters"]), 3)
@@ -149,7 +182,31 @@ class SitePublishTest(unittest.TestCase):
             self.assertTrue(result["ok"], result)
             self.assertTrue(result["changed"])
             current = json.loads((work / "docs/data/manifest.json").read_text(encoding="utf-8"))
-            self.assertEqual(current["formatVersion"], 3)
+            self.assertEqual(current["formatVersion"], 4)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+
+    def test_publish_refuses_when_only_placeholders(self) -> None:
+        work = ROOT / ".tmp-test-run" / uuid.uuid4().hex
+        work.mkdir(parents=True)
+        try:
+            write_payload(work, self.payload)
+            placeholder = json.loads(json.dumps(self.document))
+            for chapter in placeholder["chapters"]:
+                chapter["panels"] = [{"chars": []}]
+
+            class Database:
+                def revision(inner):
+                    return 8
+                def load_document(inner):
+                    return normalize_document(placeholder)
+
+            refused = publish_site(Database(), work, export_only=True)
+            self.assertFalse(refused["ok"])
+            self.assertIn("没有可发布的角色数据", refused["error"])
+            forced = publish_site(Database(), work, export_only=True, force=True)
+            self.assertTrue(forced["ok"], forced)
+            self.assertEqual(forced["counts"]["chapters"], 0)
         finally:
             shutil.rmtree(work, ignore_errors=True)
 

@@ -2,17 +2,22 @@
  * 超超你的小站 · 公开统计页
  *
  * 只读 docs/data 下的分片 JSON 和 docs/colors.json；不连接任何后端。
- * 数据格式固定为 formatVersion=3、schemaVersion=2。
+ * 数据格式固定为 formatVersion=4、schemaVersion=2。
  *
  * 统计口径：
  *   count    分镜计数
  *   points   每个分镜 8 分除以 10，再平均分给该分镜里的角色
  *   weighted 每话按“截至该话已登场角色总数 / 10”给每个分镜计分，再平均分给角色
+ *   density  份额密度：份额 = points / 0.8；跨度按话计算，
+ *            first = 首次出场话，last = 最新发布话
+ *            density = 份额 / 跨度分镜数 × (跨度分镜数 / 区间分镜数)^0.5 × 100
  */
 (function () {
   'use strict';
 
-  var DATA_FORMAT = 3;
+  var DATA_FORMAT = 4;
+  var DENSITY_ALPHA = 0.5;   // composite_share 的指数，来自原统计脚本
+  var POINTS_TO_SHARE = 1 / 0.8;  // points 已整体除以 10；份额 = points / 0.8
   var FALLBACK_COLORS = ['#5eead4', '#fbbf24', '#fb7185', '#60a5fa', '#a78bfa', '#34d399', '#f97316', '#e879f9'];
 
   var state = {
@@ -48,6 +53,12 @@
     var number = Number(value);
     if (!isFinite(number)) number = 0;
     if (metric === 'count') return Math.round(number).toLocaleString('zh-CN');
+    if (metric === 'density') {
+      return number.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + '%';
+    }
     return number.toLocaleString('zh-CN', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
@@ -117,7 +128,7 @@
     return fetchJson('data/manifest.json?t=' + Date.now())
       .then(function (manifest) {
         if (!manifest || manifest.schema !== 'girls_dict' || manifest.schemaVersion !== 2 || manifest.formatVersion !== DATA_FORMAT) {
-          throw new Error('公开数据需要 girls_dict、schemaVersion=2、formatVersion=3');
+          throw new Error('公开数据需要 girls_dict、schemaVersion=2、formatVersion=' + DATA_FORMAT);
         }
         state.manifest = manifest;
         // formatVersion 参与缓存 key：同 revision、不同格式时不会命中旧缓存
@@ -141,11 +152,13 @@
             throw new Error('分片需要 girls_dict、schemaVersion=2');
           }
           if (!Array.isArray(stats.characters) || !Array.isArray(index.chapters) ||
-              Object.prototype.hasOwnProperty.call(stats, 'maxPanels') || Object.prototype.hasOwnProperty.call(stats, 'panels')) throw new Error('统计字段不合法');
+              Object.prototype.hasOwnProperty.call(stats, 'maxPanels') || Object.prototype.hasOwnProperty.call(stats, 'panels') ||
+              typeof stats.maxDensity !== 'number') throw new Error('统计字段不合法');
           stats.characters.forEach(function (item) {
             if (!item || Object.prototype.hasOwnProperty.call(item, 'panels') || Object.prototype.hasOwnProperty.call(item, 'maxPanels') ||
-                typeof item.count !== 'number' || typeof item.points !== 'number' || typeof item.weighted !== 'number') {
-              throw new Error('角色统计必须使用 count/points/weighted');
+                typeof item.count !== 'number' || typeof item.points !== 'number' ||
+                typeof item.weighted !== 'number' || typeof item.density !== 'number') {
+              throw new Error('角色统计必须使用 count/points/weighted/density');
             }
           });
           index.chapters.forEach(function (chapter) {
@@ -223,9 +236,19 @@
   }
 
   function aggregateFromIndex(startChapter) {
+    var chapters = (state.index.chapters || []).filter(function (chapter) {
+      return Number(chapter.no) >= startChapter;
+    });
+    var totalPanels = chapters.reduce(function (sum, chapter) {
+      return sum + (Number(chapter.panelCount) || 0);
+    }, 0);
+    var panelsFrom = function (firstNo) {
+      return chapters.reduce(function (sum, chapter) {
+        return sum + (Number(chapter.no) >= firstNo ? (Number(chapter.panelCount) || 0) : 0);
+      }, 0);
+    };
     var totals = {};
-    (state.index.chapters || []).forEach(function (chapter) {
-      if (Number(chapter.no) < startChapter) return;
+    chapters.forEach(function (chapter) {
       var metrics = chapter.metrics || {};
       Object.keys(metrics).forEach(function (key) {
         var metric = metrics[key] || {};
@@ -238,13 +261,24 @@
 
     return state.stats.characters.map(function (item) {
       var total = totals[String(item.char)];
+      var count = total ? total.count : 0;
+      var density = 0;
+      if (count > 0 && item.firstChapter != null && totalPanels > 0) {
+        var first = Math.max(startChapter, Number(item.firstChapter));
+        var active = panelsFrom(first);
+        if (active > 0) {
+          var share = total.points * POINTS_TO_SHARE;
+          density = Number((share / active * Math.pow(active / totalPanels, DENSITY_ALPHA) * 100).toFixed(2));
+        }
+      }
       return {
         char: item.char,
         name: item.name,
         firstChapter: item.firstChapter,
-        count: total ? total.count : 0,
+        count: count,
         points: total ? total.points : 0,
         weighted: total ? total.weighted : 0,
+        density: density,
       };
     });
   }
@@ -293,12 +327,19 @@
       return state.order === 'asc' ? a.char - b.char : b.char - a.char;
     });
 
-    var max = rows.reduce(function (highest, item) {
-      return Math.max(highest, item.value);
-    }, 0);
+    // 条形长度：最小值固定占 10%，最大值占满 100%，中间线性映射。
+    // 所有值相同时没有可比较的区间，按最大值处理（100%）。
+    var values = rows.map(function (item) { return item.value; });
+    var max = Math.max.apply(null, values);
+    var min = Math.min.apply(null, values);
+    var widthOf = function (value) {
+      if (max <= 0) return 0;
+      if (max === min) return 100;
+      return 10 + ((value - min) / (max - min)) * 90;
+    };
 
     els.chart.innerHTML = rows.map(function (item) {
-      var width = max > 0 ? (item.value / max) * 100 : 0;
+      var width = widthOf(item.value);
       var color = colorFor(item.char);
       var name = item.name || '';
       var label = '角色 ' + item.char + (item.name ? ' ' + item.name : '') +
