@@ -19,10 +19,12 @@
   var DENSITY_ALPHA = 0.5;   // composite_share 的指数，来自原统计脚本
   var POINTS_TO_SHARE = 1 / 0.8;  // points 已整体除以 10；份额 = points / 0.8
 
-  // 条形长度算法。以后想换回旧效果，只改这一行：
-  //   'min10' —— 最小值固定占 10%，最大值占 100%，中间线性（当前默认）
-  //   'ratio' —— 旧版逻辑：value / max × 100，最小值可能贴近 0
-  var BAR_SCALE_MODE = 'ratio';
+  // 条形长度算法。以后想换显示方式，只改这一行：
+  //   'min10' —— 线性：最小值 10%，最大值 100%（当前默认）
+  //   'ratio' —— 旧版：value / max × 100，最小值可能贴近 0
+  //   'log'   —— 对数刻度：拉开低值差距、压缩高值，适合长尾数据
+  //   'sqrt'  —— 平方根刻度：介于线性和对数之间的折中
+  var BAR_SCALE_MODE = 'sqrt';
   var FALLBACK_COLORS = ['#5eead4', '#fbbf24', '#fb7185', '#60a5fa', '#a78bfa', '#34d399', '#f97316', '#e879f9'];
 
   var state = {
@@ -71,15 +73,30 @@
   }
 
   /**
-   * 计算条形宽度（百分比）。两种算法由文件顶部的 BAR_SCALE_MODE 决定：
-   *   min10（当前）：最小值 10、最大值 100，中间线性；所有值相等时统一 100。
-   *   ratio（旧版）：value / max × 100；max ≤ 0 时宽度为 0。
+   * 计算条形宽度（百分比）。算法由文件顶部的 BAR_SCALE_MODE 决定：
+   *   min10（默认）：线性映射到 10–100；所有值相等时统一 100。
+   *   ratio（旧版）：value / max × 100；max ≤ 0 时为 0。
+   *   log：先取对数再映射到 10–100；低值之间的差距更明显，高值会被压缩。
+   *   sqrt：先开平方再映射到 10–100；效果介于线性和对数之间。
+   * 对数/平方根在无法计算时（0 或负数）自动退回线性，避免出现 NaN。
    */
   function barWidth(value, min, max) {
     if (max <= 0) return 0;
     if (BAR_SCALE_MODE === 'ratio') return (value / max) * 100;
     if (max === min) return 100;
-    return 10 + ((value - min) / (max - min)) * 90;
+    var ratio;
+    if (BAR_SCALE_MODE === 'log') {
+      ratio = (min > 0 && value > 0)
+        ? (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min))
+        : (value - min) / (max - min);
+    } else if (BAR_SCALE_MODE === 'sqrt') {
+      ratio = min >= 0
+        ? (Math.sqrt(value) - Math.sqrt(min)) / (Math.sqrt(max) - Math.sqrt(min))
+        : (value - min) / (max - min);
+    } else {
+      ratio = (value - min) / (max - min);
+    }
+    return 10 + ratio * 90;
   }
 
   function formatDateOnly(iso) {

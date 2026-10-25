@@ -15,6 +15,9 @@ const index = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'data', 'chapte
 const colors = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'colors.json'), 'utf8'));
 const pageHtml = fs.readFileSync(path.join(ROOT, 'docs', 'index.html'), 'utf8');
 const siteCss = fs.readFileSync(path.join(ROOT, 'docs', 'css', 'site.css'), 'utf8');
+const chartSource = fs.readFileSync(path.join(ROOT, 'docs', 'js', 'chart.js'), 'utf8');
+// 条形算法可在 chart.js 顶部切换；测试跟着当前配置走。
+const barScaleMode = (chartSource.match(/var BAR_SCALE_MODE = '([^']+)'/) || [])[1] || 'min10';
 
 function makeElement(id) {
   return {
@@ -124,6 +127,29 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   const densityText = (number) => number.toLocaleString('zh-CN', {
     minimumFractionDigits: 2, maximumFractionDigits: 2,
   }) + '%';
+  const widthFor = (value, min, max) => {
+    if (max <= 0) return 0;
+    if (barScaleMode === 'ratio') return (value / max) * 100;
+    if (max === min) return 100;
+    let ratio;
+    if (barScaleMode === 'log') {
+      ratio = (min > 0 && value > 0)
+        ? (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min))
+        : (value - min) / (max - min);
+    } else if (barScaleMode === 'sqrt') {
+      ratio = min >= 0
+        ? (Math.sqrt(value) - Math.sqrt(min)) / (Math.sqrt(max) - Math.sqrt(min))
+        : (value - min) / (max - min);
+    } else {
+      ratio = (value - min) / (max - min);
+    }
+    return 10 + ratio * 90;
+  };
+  const expectedWidths = (values) => {
+    const lo = Math.min.apply(null, values);
+    const hi = Math.max.apply(null, values);
+    return values.map((value) => Number(widthFor(value, lo, hi).toFixed(2)));
+  };
   const expectedDensity = (char, start) => {
     const chapters = index.chapters.filter((chapter) => Number(chapter.no) >= start);
     const totalPanels = chapters.reduce((sum, chapter) => sum + chapter.panelCount, 0);
@@ -171,15 +197,17 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   assert.ok(elements.chart.innerHTML.includes(densityText(visible[0].density)), '密度应使用 density 数据');
   assert.ok(/\d+\.\d{2}%/.test(elements.chart.innerHTML), '密度应保留两位小数并带百分号');
   const densityWidths = widths(elements.chart.innerHTML).map(Number);
+  assert.deepStrictEqual(densityWidths, expectedWidths(visible.map((row) => row.density)),
+    '密度宽度应符合当前条形算法');
   assert.strictEqual(Math.max.apply(null, densityWidths), 100, '密度最大值应占满');
-  assert.strictEqual(Math.min.apply(null, densityWidths), 10, '密度最小值应占 10%');
 
-  /* 条形比例：最大值 100%，最小值 10% */
+  /* 条形比例：逐行对照当前 BAR_SCALE_MODE 的算法；最大值始终 100% */
   elements.metric.value = 'count';
   elements.metric.fire('change');
   const countWidths = widths(elements.chart.innerHTML).map(Number);
+  assert.deepStrictEqual(countWidths, expectedWidths(visible.map((row) => row.count)),
+    '计数宽度应符合当前条形算法');
   assert.strictEqual(Math.max.apply(null, countWidths), 100, '计数最大值应占满');
-  assert.strictEqual(Math.min.apply(null, countWidths), 10, '计数最小值应占 10%');
 
   /* 排序 */
   elements.sort.value = 'data';
