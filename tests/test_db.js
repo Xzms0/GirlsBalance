@@ -44,14 +44,14 @@ function freshDatabase(name, options) {
   fs.mkdirSync(dir, { recursive: true });
   const database = new db.GirlsDB(
     path.join(dir, 'girls.sqlite3'),
-    Object.assign({ backupInterval: 0, legacyJson: null }, options || {})
+    Object.assign({ backupInterval: 0 }, options || {})
   );
   database.initialize();
   return database;
 }
 
 function readSample() {
-  return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'sample.girls_dict.json'), 'utf8'));
+  return db.normalizeDocument(JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'sample.girls_dict.json'), 'utf8')));
 }
 
 /** 侧门：直接查底层的 panel.position，验证「顺序连续」这件事真的落到了表里。 */
@@ -75,7 +75,7 @@ console.log('建表与基础信息');
 test('常量与 Python 版一致', () => {
   assert.strictEqual(db.SCHEMA_NAME, 'girls_dict');
   assert.strictEqual(db.STORAGE_VERSION, 2);
-  assert.strictEqual(db.EXPORT_VERSION, 1);
+  assert.strictEqual(db.EXPORT_VERSION, 2);
   assert.strictEqual(db.CHAR_MIN, 0);
   assert.strictEqual(db.CHAR_MAX, 100);
   assert.strictEqual(db.DEFAULT_BACKUP_KEEP, 20);
@@ -573,7 +573,7 @@ test('exportDocument/exportJson 不含任何 id，结构固定', () => {
   assert.ok(!text.includes('pn-') && !text.includes('ch-'), '导出不应出现内部 id');
   assert.deepStrictEqual(Object.keys(exported), ['schema', 'schemaVersion', 'exportedAt', 'meta', 'chapters']);
   assert.strictEqual(exported.schema, 'girls_dict');
-  assert.strictEqual(exported.schemaVersion, 1);
+  assert.strictEqual(exported.schemaVersion, 2);
   assert.ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/.test(exported.exportedAt));
   assert.deepStrictEqual(Object.keys(exported.chapters[0]), ['no', 'title', 'note', 'panels']);
   assert.deepStrictEqual(Object.keys(exported.chapters[0].panels[0]), ['chars']);
@@ -610,22 +610,81 @@ test('导出 → 导入（对象）往返后内容一致', () => {
   assert.strictEqual(JSON.stringify(exported).includes('"id"'), false);
 });
 
-test('importJson 也能吃 JSON 文本解析出来的对象，并重排编号', () => {
-  const database = freshDatabase('import-object');
-  const raw = {
-    meta: { title: '手工数据', charNames: { 2: '小美', 999: '越界' } },
-    chapters: [
-      { no: 9, title: '甲', panels: [{ chars: [2, 2, 999] }, 'garbage'] },
-      { title: '乙', panels: [] },
-    ],
-  };
-  const stats = database.importJson(raw);
-  assert.strictEqual(stats.chapters, 2);
-  const document = database.loadDocument();
-  assert.deepStrictEqual(document.chapters.map((chapter) => chapter.no), [1, 2]);
-  assert.deepStrictEqual(document.chapters[0].panels.map((panel) => panel.chars), [[2]]);
-  assert.deepStrictEqual(document.meta.charNames, { 2: '小美' });
-  assert.strictEqual(document.meta.title, '手工数据');
+test('空标题与空角色名在导入、整库替换和快照恢复中原样保留', () => {
+  const payload = db.stripIds(readSample());
+  payload.meta.title = '';
+  payload.meta.charNames['2'] = '';
+  assert.deepStrictEqual(db.validateExportDocument(payload), [], '空标题/空角色名本身是合法格式');
+
+  const database = freshDatabase('empty-meta');
+  database.importJson(payload);
+  let document = database.loadDocument();
+  assert.strictEqual(document.meta.title, '', '空标题必须原样保存');
+  assert.strictEqual(document.meta.charNames['2'], '', '空角色名必须原样保存');
+  assert.deepStrictEqual(db.validateExportDocument(db.stripIds(document)), [], '读回后仍是合法格式');
+
+  // 整库替换（内部文档）同样保真，不能被默认标题覆盖
+  database.replaceAll(document);
+  document = database.loadDocument();
+  assert.strictEqual(document.meta.title, '');
+  assert.strictEqual(document.meta.charNames['2'], '');
+
+  // 快照恢复：快照里的空标题也要保持为空
+  const target = database.createBackup('empty-meta');
+  database.applyPatch([{ op: 'meta.update', title: '临时标题' }]);
+  assert.strictEqual(database.loadDocument().meta.title, '临时标题');
+  database.restoreBackup(path.basename(target));
+  document = database.loadDocument();
+  assert.strictEqual(document.meta.title, '', '恢复快照时空标题不能被默认值替换');
+  assert.strictEqual(document.meta.charNames['2'], '');
+
+  // 文件导入路径与对象导入规则一致
+  const dir = path.join(WORK, 'empty-meta-file');
+  fs.mkdirSync(dir, { recursive: true });
+  const source = path.join(dir, 'empty.json');
+  fs.writeFileSync(source, JSON.stringify(payload));
+  const other = new db.GirlsDB(path.join(dir, 'girls.sqlite3'), { backupInterval: 0 });
+  other.initialize();
+  other.importJson(source);
+  assert.strictEqual(other.loadDocument().meta.title, '');
+  assert.strictEqual(other.loadDocument().meta.charNames['2'], '');
+});
+
+test('meta.update 可以把标题清空，而不是被静默忽略', () => {
+  const database = freshDatabase('title-clear');
+  database.replaceAll(readSample());
+  database.applyPatch([{ op: 'meta.update', title: '' }]);
+  assert.strictEqual(database.loadDocument().meta.title, '');
+  assert.strictEqual(database.loadDocument().meta.author, '示例数据');
+});
+
+test('strict external import rejects old versions, ids, unknown fields and malformed values without writing', () => {
+  const database = freshDatabase('strict-import');
+  const good = db.stripIds(readSample());
+  assert.deepStrictEqual(db.validateExportDocument(good), []);
+  const mutations = [
+    d => { d.schemaVersion = 1; }, d => { delete d.schema; },
+    d => { d.chapters[0].id = 'old'; }, d => { d.chapters[0].panels[0].id = 'old'; },
+    d => { d.document = {}; }, d => { delete d.meta.author; },
+    d => { d.meta.charNames['01'] = 'bad'; }, d => { d.meta.charMin = false; },
+    d => { d.chapters[0].no = 9; }, d => { delete d.chapters[0].note; },
+    d => { d.chapters[0].panels[0].chars = [2, 1]; },
+    d => { d.chapters[0].panels[0].chars = [1, 1]; },
+    d => { d.chapters[0].panels[0].chars = ['1']; },
+    d => { d.chapters[0].panels[0].chars = [true]; },
+    d => { d.chapters[0].panels[0].chars = [101]; },
+    d => { d.revision = -1; }, d => { d.exportedAt = 123; },
+  ];
+  for (const mutate of mutations) {
+    const bad = structuredClone(good); mutate(bad);
+    assert.throws(() => database.importJson(bad), db.ValidationError);
+    assert.strictEqual(database.revision(), 0);
+  }
+  database.importJson(good);
+  assert.ok(database.loadDocument().chapters[0].id);
+  assert.throws(() => database.applyPatch([{op: 'replace', document: database.loadDocument()}]), db.OpError);
+  const old = database.loadDocument(); old.schemaVersion = 1;
+  assert.throws(() => database.replaceAll(old), db.ValidationError);
 });
 
 test('exportCsv 是 0/1 矩阵：话-分镜 × 0..100', () => {
@@ -674,7 +733,7 @@ test('createBackup 用 VACUUM INTO 生成可读快照，listBackups 带名字/�
   assert.ok(listed[0].size > 0);
   assert.ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/.test(listed[0].mtime));
 
-  const snapshot = new db.GirlsDB(target, { backupInterval: 0, legacyJson: null });
+  const snapshot = new db.GirlsDB(target, { backupInterval: 0 });
   assert.strictEqual(snapshot.loadDocument().chapters.length, 3, '快照本身是一份可用数据库');
 });
 
@@ -724,99 +783,41 @@ test('integrityCheck 干净；导出导入往返后依然干净', () => {
   assert.deepStrictEqual(db.defaultDocument().chapters, []);
 });
 
-/* --------------------------------------------------------------------------- *
- * 旧 JSON 迁移 / 导入归档
- * --------------------------------------------------------------------------- */
-console.log('\n迁移与归档');
-
-test('importJson 从文件导入并可归档源文件（字节一致）', () => {
-  const dir = path.join(WORK, 'import-file');
-  fs.mkdirSync(dir, { recursive: true });
-  const source = path.join(dir, 'old-data.json');
-  const payload = JSON.stringify(readSample(), null, 2);
-  fs.writeFileSync(source, payload, 'utf8');
-  const originalBytes = fs.readFileSync(source);
-
-  const database = new db.GirlsDB(path.join(dir, 'girls.sqlite3'), { backupInterval: 0, legacyJson: null });
-  database.initialize();
-  const stats = database.importJson(source, { archive: true });
-  assert.strictEqual(stats.source, source);
-  assert.strictEqual(stats.chapters, 3);
-  assert.strictEqual(stats.panels, 10);
-  assert.ok(stats.archived && stats.archived.includes(`${path.sep}legacy${path.sep}`));
-  assert.ok(stats.archived.endsWith('-migrated-') === false);
-  assert.ok(/-migrated-\d{8}-\d{6}\.json$/.test(stats.archived), `归档名不对：${stats.archived}`);
-  assert.strictEqual(fs.existsSync(source), false, '归档后原文件应被移走');
-  assert.ok(fs.readFileSync(stats.archived).equals(originalBytes), '归档内容必须与原文件逐字节一致');
-  assert.strictEqual(database.loadDocument().chapters.length, 3);
-  // 文件导入同样会写回 author
-  assert.strictEqual(database.loadDocument().meta.author, '示例数据');
-
-  assert.throws(() => database.importJson(path.join(dir, 'missing.json')),
-    (error) => error.code === 'ENOENT' && error.message.includes('找不到文件'));
+test('removed options and migration CLI flags are rejected', () => {
+  const database = freshDatabase('removed-options');
+  assert.throws(() => new db.GirlsDB(database.path, {legacyJson: null}), TypeError);
+  assert.throws(() => database.importJson(db.stripIds(readSample()), {archive: true}), TypeError);
+  assert.throws(() => database.replaceAll(readSample(), {strict: true}), TypeError);
+  const {parseArgs} = require('../server/server.js');
+  for (const flag of ['--legacy-json', '--migrate-json']) {
+    assert.throws(() => parseArgs(['--data', path.join(WORK, 'never-created.sqlite3'), flag, 'x']));
+  }
+  assert.strictEqual(fs.existsSync(path.join(WORK, 'never-created.sqlite3')), false);
+  assert.strictEqual(database.migration, undefined);
+  assert.strictEqual(database.autoMigrate, undefined);
+  assert.strictEqual(database.archiveLegacy, undefined);
+  const current = database.loadDocument();
+  assert.throws(() => database.applyPatch([{op: 'replace', db: current, document: current}]), db.OpError);
 });
 
-test('自动迁移：首次建库时吃掉旁边的 girls_dict.json 并归档', () => {
-  const dir = path.join(WORK, 'migrate');
-  fs.mkdirSync(dir, { recursive: true });
-  const legacy = path.join(dir, 'girls_dict.json');
-  fs.writeFileSync(legacy, JSON.stringify(readSample(), null, 2), 'utf8');
-  const originalBytes = fs.readFileSync(legacy);
-
-  const database = new db.GirlsDB(path.join(dir, 'girls_dict.sqlite3'), { backupInterval: 0 });
-  const info = database.initialize();
-  assert.strictEqual(info.fresh, true);
-  assert.strictEqual(info.migration.ok, true);
-  assert.strictEqual(info.migration.chapters, 3);
-  assert.strictEqual(info.migration.panels, 10);
-  assert.strictEqual(info.migration.chars, 23);
-  assert.strictEqual(database.loadDocument().chapters.length, 3);
-  assert.strictEqual(database.loadDocument().meta.title, '超超你的字典 · 示例');
-  assert.strictEqual(fs.existsSync(legacy), false, '旧 JSON 应被移走（不是删除）');
-  assert.ok(fs.readFileSync(info.migration.archived).equals(originalBytes), '归档必须逐字节一致');
-
-  // 第二次启动不该再迁移（文件已经不在了）
-  const again = new db.GirlsDB(path.join(dir, 'girls_dict.sqlite3'), { backupInterval: 0 });
-  assert.strictEqual(again.initialize().fresh, false);
-  assert.strictEqual(again.migration, null);
-});
-
-test('迁移失败（坏 JSON）时源文件原封不动，库仍可用', () => {
-  const dir = path.join(WORK, 'migrate-broken');
-  fs.mkdirSync(dir, { recursive: true });
-  const legacy = path.join(dir, 'girls_dict.json');
-  fs.writeFileSync(legacy, '{ 这不是 JSON', 'utf8');
-  const originalBytes = fs.readFileSync(legacy);
-
-  const database = new db.GirlsDB(path.join(dir, 'girls_dict.sqlite3'), { backupInterval: 0 });
-  const info = database.initialize();
-  assert.strictEqual(info.migration.ok, false);
-  assert.ok(info.migration.error.includes('不是合法 JSON'), info.migration.error);
-  assert.strictEqual(info.migration.source, legacy);
-  assert.ok(fs.existsSync(legacy), '迁移失败绝不能动源文件');
-  assert.ok(fs.readFileSync(legacy).equals(originalBytes), '源文件必须逐字节原样');
-  assert.strictEqual(fs.existsSync(path.join(dir, 'legacy')), false, '失败时不该产生归档');
+test('file import is strict and never archives or reads neighboring JSON automatically', () => {
+  const dir = path.join(WORK, 'no-auto-import'); fs.mkdirSync(dir, {recursive: true});
+  const source = path.join(dir, 'girls_dict.json');
+  fs.writeFileSync(source, '{invalid JSON');
+  const database = new db.GirlsDB(path.join(dir, 'db.sqlite3'), {backupInterval: 0});
+  assert.deepStrictEqual(database.initialize(), {fresh: true});
   assert.deepStrictEqual(database.loadDocument().chapters, []);
-  assert.deepStrictEqual(database.integrityCheck(), []);
-  // 库本身还能正常用
-  database.replaceAll(readSample());
-  assert.strictEqual(database.loadDocument().chapters.length, 3);
-});
-
-test('空文件与不存在的旧 JSON 都不算迁移', () => {
-  const dir = path.join(WORK, 'migrate-empty');
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'girls_dict.json'), '   \n', 'utf8');
-  const database = new db.GirlsDB(path.join(dir, 'girls_dict.sqlite3'), { backupInterval: 0 });
-  const info = database.initialize();
-  assert.strictEqual(info.migration.ok, true, '空文件按空库导入');
-  assert.strictEqual(info.migration.chapters, 0);
-  assert.deepStrictEqual(database.loadDocument().chapters, []);
-
-  const none = path.join(WORK, 'migrate-none');
-  fs.mkdirSync(none, { recursive: true });
-  const empty = new db.GirlsDB(path.join(none, 'girls_dict.sqlite3'), { backupInterval: 0 });
-  assert.strictEqual(empty.initialize().migration, null, '旁边没有旧 JSON 就不迁移');
+  assert.strictEqual(fs.readFileSync(source, 'utf8'), '{invalid JSON');
+  fs.writeFileSync(source, JSON.stringify(db.stripIds(readSample())));
+  database.importJson(source);
+  assert.ok(fs.existsSync(source));
+  assert.strictEqual(fs.existsSync(path.join(dir, 'legacy')), false);
+  fs.writeFileSync(source, '');
+  assert.throws(() => database.importJson(source), SyntaxError);
+  for (const version of [null, '1', '999']) {
+    database.withConnection(conn => version === null ? conn.prepare("DELETE FROM info WHERE key='schema_version'").run() : database.setInfo(conn, 'schema_version', version));
+    assert.throws(() => database.initialize(), db.ValidationError);
+  }
 });
 
 /* --------------------------------------------------------------------------- *
@@ -898,11 +899,11 @@ async function httpPhase() {
   const dir = path.join(WORK, 'http');
   fs.mkdirSync(dir, { recursive: true });
   const dataFile = path.join(dir, 'http.sqlite3');
-  const database = new db.GirlsDB(dataFile, { backupInterval: 0, legacyJson: null });
+  const database = new db.GirlsDB(dataFile, { backupInterval: 0 });
   database.initialize();
   const options = {
     data: dataFile, public: path.join(ROOT, 'public'), allowOrigin: [],
-    backupInterval: 0, legacyJson: null,
+    backupInterval: 0,
   };
   const { server } = createApp(options, database);
   const port = await listen(server, '127.0.0.1', 8917);
@@ -997,10 +998,28 @@ async function httpPhase() {
       assert.strictEqual(database.loadDocument().chapters.length, 3);
     });
 
+    for (const [method, endpoint, payload] of [
+      ['PUT', '/api/db', sample],
+      ['POST', '/api/db/import', db.stripIds(sample)],
+      ['POST', '/api/db/validate', db.stripIds(sample)],
+      ['POST', '/api/db/import', {db: db.stripIds(sample), path: 'missing.json'}],
+      ['POST', '/api/db/import', {db: db.stripIds(sample), archive: true}],
+      ['PUT', '/api/db', {db: sample, force: true, strict: true}],
+    ]) {
+      const rejected = await call(method, endpoint, payload);
+      test(`${method} ${endpoint} rejects removed aliases/options`, () => assert.strictEqual(rejected.status, 400));
+    }
+    const validation = await call('POST', '/api/db/validate', {db: db.stripIds(sample)});
+    test('strict validation accepts current external format', () => assert.strictEqual(validation.body.valid, true));
+    const raw = await call('GET', '/api/db/raw');
+    test('raw endpoint removed', () => assert.strictEqual(raw.status, 404));
+
     result = await call('GET', '/api/health');
     test('GET /api/health 报告 sqlite 存储与规模', () => {
       assert.strictEqual(result.status, 200);
       assert.strictEqual(result.body.storage, 'sqlite');
+      assert.strictEqual(result.body.migration, undefined);
+      assert.strictEqual(result.body.exportVersion, 2);
       assert.strictEqual(result.body.storageVersion, 2);
       assert.strictEqual(result.body.chapters, 3);
       assert.ok(result.body.dataFileSize > 0);

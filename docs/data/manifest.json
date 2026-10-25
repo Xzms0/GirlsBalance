@@ -1,7 +1,7 @@
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
-  "formatVersion": 2,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "revision": 16439,
   "exportedAt": "2026-10-24T07:07:10+00:00",
   "title": "超超你的字典",

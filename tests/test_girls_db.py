@@ -26,6 +26,8 @@ from girls_db import (  # noqa: E402
     GirlsDB,
     OpError,
     RevisionConflict,
+    ValidationError,
+    validate_export_document,
     clean_chars,
     new_id,
     normalize_document,
@@ -33,6 +35,11 @@ from girls_db import (  # noqa: E402
 )
 
 SAMPLE = ROOT / "data" / "sample.girls_dict.json"
+
+
+def sample_document():
+    # The repository example is not the API fixture: construct a current external document.
+    return strip_ids(normalize_document(json.loads(SAMPLE.read_text(encoding="utf-8"))))
 
 
 class TempDirCase(unittest.TestCase):
@@ -48,7 +55,7 @@ class TempDirCase(unittest.TestCase):
         shutil.rmtree(self.dir, ignore_errors=True)
 
     def make_db(self, **kwargs) -> GirlsDB:
-        database = GirlsDB(self.path, backup_interval=0, legacy_json=None, **kwargs)
+        database = GirlsDB(self.path, backup_interval=0, **kwargs)
         database.initialize()
         self.addCleanup(database.close)      # 常驻连接用完要关（也能让告警安静）
         return database
@@ -270,7 +277,7 @@ class TestReads(TempDirCase):
     def setUp(self) -> None:
         super().setUp()
         self.database = self.make_db()
-        self.database.import_json(SAMPLE)
+        self.database.import_json(sample_document())
 
     def test_index_counts(self) -> None:
         index = self.database.load_index()
@@ -315,7 +322,7 @@ class TestExport(TempDirCase):
     def setUp(self) -> None:
         super().setUp()
         self.database = self.make_db()
-        self.database.import_json(SAMPLE)
+        self.database.import_json(sample_document())
 
     def test_export_json_has_no_ids(self) -> None:
         payload = self.database.export_document()
@@ -334,7 +341,7 @@ class TestExport(TempDirCase):
 
     def test_export_roundtrip_into_empty_db(self) -> None:
         exported = self.database.export_document()
-        other = GirlsDB(self.dir / "other.sqlite3", backup_interval=0, legacy_json=None)
+        other = GirlsDB(self.dir / "other.sqlite3", backup_interval=0)
         other.initialize()
         self.addCleanup(other.close)
         other.import_json(exported)
@@ -344,6 +351,55 @@ class TestExport(TempDirCase):
         for a, b in zip(original, copy_chapters):
             self.assertEqual(a["title"], b["title"])
             self.assertEqual([p["chars"] for p in a["panels"]], [p["chars"] for p in b["panels"]])
+
+    def test_empty_title_and_names_survive_import_replace_and_restore(self) -> None:
+        payload = sample_document()
+        payload["meta"]["title"] = ""
+        payload["meta"]["charNames"]["2"] = ""
+        self.assertEqual(validate_export_document(payload), [], "空标题/空角色名本身是合法格式")
+
+        database = GirlsDB(self.dir / "empty.sqlite3", backup_interval=0)
+        database.initialize()
+        self.addCleanup(database.close)
+        database.import_json(payload)
+        document = database.load_document()
+        self.assertEqual(document["meta"]["title"], "", "空标题必须原样保存")
+        self.assertEqual(document["meta"]["charNames"]["2"], "", "空角色名必须原样保存")
+        self.assertEqual(validate_export_document(strip_ids(document)), [], "读回后仍是合法格式")
+
+        # 整库替换（内部文档）同样保真，不能被默认标题覆盖
+        database.replace_all(document)
+        document = database.load_document()
+        self.assertEqual(document["meta"]["title"], "")
+        self.assertEqual(document["meta"]["charNames"]["2"], "")
+
+        # 快照恢复：快照里的空标题也要保持为空
+        snapshot = database.create_backup(tag="empty-meta")
+        database.apply_patch([{"op": "meta.update", "title": "临时标题"}])
+        self.assertEqual(database.load_document()["meta"]["title"], "临时标题")
+        database.restore_backup(snapshot.name)
+        document = database.load_document()
+        self.assertEqual(document["meta"]["title"], "", "恢复快照时空标题不能被默认值替换")
+        self.assertEqual(document["meta"]["charNames"]["2"], "")
+
+        # 文件导入路径与对象导入规则一致
+        source = self.dir / "empty.json"
+        source.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        other = GirlsDB(self.dir / "empty-file.sqlite3", backup_interval=0)
+        other.initialize()
+        self.addCleanup(other.close)
+        other.import_json(source)
+        self.assertEqual(other.load_document()["meta"]["title"], "")
+        self.assertEqual(other.load_document()["meta"]["charNames"]["2"], "")
+
+    def test_meta_update_can_clear_title(self) -> None:
+        database = GirlsDB(self.dir / "title-clear.sqlite3", backup_interval=0)
+        database.initialize()
+        self.addCleanup(database.close)
+        database.import_json(sample_document())
+        database.apply_patch([{"op": "meta.update", "title": ""}])
+        self.assertEqual(database.load_document()["meta"]["title"], "")
+        self.assertEqual(database.load_document()["meta"]["author"], "示例数据")
 
     def test_csv_matrix(self) -> None:
         csv_text = self.database.export_csv()
@@ -368,10 +424,10 @@ class TestExport(TempDirCase):
 
 class TestBackups(TempDirCase):
     def test_backup_list_prune_and_restore(self) -> None:
-        database = GirlsDB(self.path, backup_interval=0, backup_keep=3, legacy_json=None)
+        database = GirlsDB(self.path, backup_interval=0, backup_keep=3)
         database.initialize()
         self.addCleanup(database.close)
-        database.import_json(SAMPLE)
+        database.import_json(sample_document())
         snapshot = database.create_backup(tag="manual")
         self.assertTrue(snapshot.is_file())
         self.assertEqual(len(database.list_backups()), 1)
@@ -387,7 +443,7 @@ class TestBackups(TempDirCase):
         self.assertTrue(any("before-restore" in b["name"] for b in database.list_backups()))
 
     def test_backup_pruning(self) -> None:
-        database = GirlsDB(self.path, backup_interval=0, backup_keep=2, legacy_json=None)
+        database = GirlsDB(self.path, backup_interval=0, backup_keep=2)
         database.initialize()
         self.addCleanup(database.close)
         for index in range(5):
@@ -402,98 +458,92 @@ class TestBackups(TempDirCase):
             database.restore_backup("../../etc/passwd")
 
 
-class TestMigration(TempDirCase):
-    def test_auto_migrates_legacy_json_and_archives_it(self) -> None:
-        legacy = self.dir / "girls_dict.json"
-        shutil.copyfile(SAMPLE, legacy)
-        before_bytes = legacy.read_bytes()
-
-        database = GirlsDB(self.path, backup_interval=0, legacy_json=legacy)
-        database.initialize()
-        self.addCleanup(database.close)
-
-        self.assertIsNotNone(database.migration)
-        self.assertTrue(database.migration["ok"])
-        self.assertEqual(database.migration["chapters"], 3)
-        self.assertEqual(database.migration["panels"], 10)
-        self.assertEqual(database.load_index()["stats"]["appearances"], 23)
-        self.assertFalse(legacy.exists(), "旧 JSON 应被移走")
-        archived = Path(database.migration["archived"])
-        self.assertTrue(archived.is_file(), "旧 JSON 必须归档保留")
-        self.assertEqual(archived.read_bytes(), before_bytes, "归档内容必须逐字节一致")
-        self.assertIn("legacy", str(archived))
-        # 迁移留下的记录要能被后续查询到（界面上会显示「已从哪份 JSON 迁移」）
-        info = database.migration_info()
-        self.assertIsNotNone(info)
-        self.assertTrue(info["source"].endswith("girls_dict.json"))
-        self.assertTrue(info["at"])
-
-    def test_migration_handles_legacy_ids_and_broken_files(self) -> None:
-        legacy = self.dir / "girls_dict.json"
-        legacy.write_text(json.dumps({
-            "schema": "girls_dict", "revision": 9,
-            "meta": {"title": "旧库", "charNames": {"3": "三号"}},
-            "chapters": [{"id": "ch-old", "no": 7, "title": "旧的一话",
-                          "panels": [{"id": "pn-old", "chars": [3, 3, 1]}, {"chars": [101]}]}],
-        }, ensure_ascii=False), encoding="utf-8")
-        database = GirlsDB(self.path, backup_interval=0, legacy_json=legacy)
-        database.initialize()
-        self.addCleanup(database.close)
-        document = database.load_document()
-        self.assertEqual(document["meta"]["title"], "旧库")
-        self.assertEqual(document["chapters"][0]["title"], "旧的一话")
-        self.assertEqual(document["chapters"][0]["no"], 1, "编号应按位置重排")
-        self.assertEqual(document["chapters"][0]["panels"][0]["chars"], [1, 3])
-        self.assertEqual(document["chapters"][0]["panels"][1]["chars"], [], "越界编号应被丢弃")
-
-    def test_broken_json_does_not_destroy_source(self) -> None:
-        legacy = self.dir / "girls_dict.json"
-        legacy.write_text("{ 这不是 json", encoding="utf-8")
-        database = GirlsDB(self.path, backup_interval=0, legacy_json=legacy)
-        database.initialize()
-        self.addCleanup(database.close)
-        self.assertFalse(database.migration["ok"])
-        self.assertTrue(legacy.is_file(), "迁移失败时原文件必须原封不动")
-        self.assertEqual(database.load_index()["stats"]["chapters"], 0)
-
-    def test_no_legacy_file_is_fine(self) -> None:
+class TestStrictBoundary(TempDirCase):
+    def test_no_neighbor_json_read_or_archive(self):
+        source = self.dir / "girls_dict.json"
+        source.write_text("{invalid JSON", encoding="utf-8")
         database = self.make_db()
-        self.assertIsNone(database.migration)
         self.assertEqual(database.load_document()["chapters"], [])
+        self.assertEqual(source.read_text(), "{invalid JSON")
+        self.assertFalse(hasattr(database, "migration"))
+        source.write_text(json.dumps(sample_document()), encoding="utf-8")
+        database.import_json(source)
+        self.assertTrue(source.is_file())
+        self.assertFalse((self.dir / "legacy").exists())
+        with self.assertRaises(TypeError):
+            database.import_json(source, archive=True)
+        with self.assertRaises(TypeError):
+            GirlsDB(self.path, legacy_json=None)
+        with self.assertRaises(TypeError):
+            database.replace_all(database.load_document(), strict=True)
 
-    def test_import_json_can_archive(self) -> None:
-        source = self.dir / "to-import.json"
-        shutil.copyfile(SAMPLE, source)
+    def test_existing_storage_never_repaired(self):
         database = self.make_db()
-        result = database.import_json(source, archive=True)
-        self.assertEqual(result["chapters"], 3)
-        self.assertFalse(source.exists())
-        self.assertTrue(Path(result["archived"]).is_file())
+        conn = database.connect()
+        try:
+            for version in [None, "1", "999"]:
+                conn.execute("DELETE FROM info WHERE key='schema_version'")
+                if version is not None:
+                    database._set_info(conn, "schema_version", version)
+                with self.assertRaises(ValidationError):
+                    database.initialize()
+                self.assertEqual(database._info(conn, "schema_version"), version)
+        finally:
+            conn.close()
 
-    def test_archiving_never_nests_legacy_folders(self) -> None:
-        """源文件本来就在 legacy/ 里时，就地改名，不要再套一层 legacy/legacy/。"""
-        legacy_dir = self.dir / "legacy"
-        legacy_dir.mkdir()
-        source = legacy_dir / "girls_dict-migrated-20260101-000000.json"
-        shutil.copyfile(SAMPLE, source)
+    def test_import_strict_rejections_are_atomic(self):
         database = self.make_db()
-        result = database.import_json(source, archive=True)
-        archived = Path(result["archived"])
-        self.assertEqual(archived.parent, legacy_dir, "不该出现 legacy/legacy")
-        self.assertFalse((legacy_dir / "legacy").exists())
-        self.assertEqual(archived.name.count("-migrated-"), 1, "文件名不该累积 -migrated-")
-        self.assertEqual(archived.read_bytes(), SAMPLE.read_bytes())
+        good = sample_document()
+        self.assertEqual(validate_export_document(good), [])
+        mutations = [
+            lambda d: d.update(schemaVersion=1), lambda d: d.pop("schema"),
+            lambda d: d.update(document={}), lambda d: d["meta"].pop("author"),
+            lambda d: d["meta"]["charNames"].update({"01": "bad"}),
+            lambda d: d["chapters"][0].update(id="old"),
+            lambda d: d["chapters"][0]["panels"][0].update(id="old"),
+            lambda d: d["chapters"][0].update(no=9),
+            lambda d: d["chapters"][0].pop("note"),
+            lambda d: d.update(revision=True), lambda d: d.update(exportedAt=5),
+        ]
+        for chars in [[2, 1], [1, 1], ["1"], [True], [-1], [101]]:
+            mutations.append(lambda d, chars=chars: d["chapters"][0]["panels"][0].update(chars=chars))
+        for mutate in mutations:
+            bad = json.loads(json.dumps(good)); mutate(bad)
+            with self.assertRaises(ValidationError):
+                database.import_json(bad)
+            self.assertEqual(database.revision(), 0)
+        database.import_json(good)
+        document = database.load_document()
+        self.assertTrue(document["chapters"][0]["id"])
+        database.replace_all(document)
+        with self.assertRaises(OpError):
+            database.apply_patch([{"op": "replace", "document": document}])
+        with self.assertRaises(OpError):
+            database.apply_patch([{"op": "replace", "db": document, "document": document}])
+        document["schemaVersion"] = 1
+        with self.assertRaises(ValidationError):
+            database.replace_all(document)
+
+    def test_migration_cli_flags_rejected_before_open(self):
+        import subprocess
+        for script, flags in [("server/server.py", ["--legacy-json", "x"]),
+                              ("server/server.py", ["--migrate-json", "x"]),
+                              ("tools/gd.py", ["migrate", "--from", "x"])]:
+            result = subprocess.run([sys.executable, str(ROOT / script), "--data", str(self.path), *flags],
+                                    capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(self.path.exists())
 
 
 class TestIntegrity(TempDirCase):
     def test_integrity_check_clean_database(self) -> None:
         database = self.make_db()
-        database.import_json(SAMPLE)
+        database.import_json(sample_document())
         self.assertEqual(database.integrity_check(), [])
 
     def test_integrity_check_detects_bad_rows(self) -> None:
         database = self.make_db()
-        database.import_json(SAMPLE)
+        database.import_json(sample_document())
         connection = database.connect()
         try:
             connection.execute("PRAGMA foreign_keys = OFF")
@@ -507,7 +557,7 @@ class TestIntegrity(TempDirCase):
 
     def test_size_includes_wal(self) -> None:
         database = self.make_db()
-        database.import_json(SAMPLE)
+        database.import_json(sample_document())
         self.assertGreater(database.db_size(), 0)
         self.assertGreaterEqual(database.db_size(), self.path.stat().st_size)
 

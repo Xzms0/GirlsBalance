@@ -27,3 +27,6 @@ data/README-broken.txt
 # 交接文档
 HANDOFF.md
 TASK.md
+
+# 原始格式转换归档
+/.format-backups/

@@ -225,7 +225,7 @@ function loadSandbox(files, extras) {
     if (file === 'adapters.js') {
       const original = windowStub.GD.adapters.create;
       windowStub.GD.adapters.create = function (kind, options) {
-        if (kind === 'idb' || kind === 'local') return memoryAdapter();
+        if (kind === 'idb') return memoryAdapter();
         return original.call(this, kind, options);
       };
     }
@@ -672,6 +672,36 @@ async function appPhase() {
     assert.strictEqual(JSON.stringify(appStore.state.db.chapters), before, '读回的内容应与保存的一致');
   });
 
+  await test('UI 导入拒绝旧格式且不修改现有库', () => {
+    const before = JSON.stringify(appStore.state.db);
+    let confirmation = false;
+    const original = appEnv.GD.ui.confirm;
+    appEnv.GD.ui.confirm = () => { confirmation = true; return Promise.resolve(true); };
+    appEnv.sandbox.FileReader = class {
+      readAsText(file) { this.result = file.text; this.onload(); }
+    };
+    const node = appEnv.document.getElementById('import-file');
+    node.files = [{ text: JSON.stringify({ chapters: [] }) }];
+    appEnv.fire('change', node);
+    assert.strictEqual(confirmation, false);
+    assert.strictEqual(JSON.stringify(appStore.state.db), before);
+    appEnv.GD.ui.confirm = original;
+  });
+
+  await test('UI 导入当前无 id 格式', async () => {
+    const original = appEnv.GD.ui.confirm;
+    appEnv.GD.ui.confirm = () => Promise.resolve(true);
+    const exported = appModel.toExportDocument(appStore.state.db);
+    exported.meta.title = '已导入当前格式';
+    const node = appEnv.document.getElementById('import-file');
+    node.files = [{ text: JSON.stringify(exported) }];
+    appEnv.fire('change', node);
+    await Promise.resolve();
+    assert.strictEqual(appStore.state.db.meta.title, '已导入当前格式');
+    assert.ok(appStore.state.db.chapters[0].id);
+    appEnv.GD.ui.confirm = original;
+  });
+
   await test('导出的 JSON 不含内部 id', async () => {
     const text = JSON.stringify(appEnv.GD.model.toExportDocument(appStore.state.db));
     assert.ok(!text.includes('"id"'), '不应出现 id');
@@ -767,7 +797,7 @@ async function httpPhase() {
     calls.length = 0;
     nextReply = {
       status: 200,
-      body: { ok: true, revision: 3, db: { chapters: [{ no: 5, panels: [{ chars: [2, 2, 1] }] }] } },
+      body: { ok: true, revision: 3, db: { schema: 'girls_dict', schemaVersion: 2, chapters: [{ no: 5, panels: [{ chars: [2, 2, 1] }] }] } },
     };
     const loaded = await adapter.load();
     assert.ok(calls[0].url.endsWith('/api/db'));
@@ -779,6 +809,15 @@ async function httpPhase() {
     assert.strictEqual(normalized.chapters[0].panels[0].chars.join(','), '1,2');
     assert.ok(normalized.chapters[0].id);
     assert.ok(normalized.chapters[0].panels[0].id);
+  });
+
+  await test('raw() 使用正常 JSON 导出 GET', async () => {
+    calls.length = 0;
+    nextReply = { status: 200, body: model.toExportDocument(model.defaultDb()) };
+    const raw = await adapter.raw();
+    assert.ok(calls[0].url.endsWith('/api/db/export?format=json'));
+    assert.strictEqual(calls[0].options.method, 'GET');
+    assert.strictEqual(JSON.parse(raw).schemaVersion, 2);
   });
 
   await test('status() 报告数据库文件与规模', async () => {
@@ -806,7 +845,104 @@ async function httpPhase() {
   });
 }
 
-appPhase().then(httpPhase).then(() => {
+async function filePhase() {
+  console.log('\n文件适配器严格导入');
+  let content = '';
+  const handle = {
+    name: 'test.json',
+    getFile: () => Promise.resolve({ text: () => Promise.resolve(content) }),
+    createWritable: () => Promise.resolve({
+      write: (text) => { content = text; return Promise.resolve(); },
+      close: () => Promise.resolve(),
+    }),
+  };
+  const fileEnv = loadSandbox(['model.js', 'adapters.js'], {
+    showOpenFilePicker: () => Promise.resolve([handle]),
+    showSaveFilePicker: () => Promise.resolve(handle),
+  });
+  const adapter = fileEnv.GD.adapters.createFileAdapter();
+  const model = fileEnv.GD.model;
+  await test('打开空文件拒绝而不是静默空库', async () => {
+    await adapter.pick('open');
+    await assert.rejects(adapter.load());
+    content = '   ';
+    await assert.rejects(adapter.load());
+  });
+  await test('新建文件先写当前默认交换格式', async () => {
+    await adapter.pick('save');
+    const payload = JSON.parse(content);
+    assert.strictEqual(payload.schemaVersion, 2);
+    assert.ok(!content.includes('"id"'));
+    assert.strictEqual((await adapter.load()).db.chapters.length, 0);
+  });
+  await test('文件导入拒绝内部 id 和旧版本', async () => {
+    const payload = model.toExportDocument(model.defaultDb());
+    payload.schemaVersion = 1;
+    content = JSON.stringify(payload);
+    await assert.rejects(adapter.load());
+    payload.schemaVersion = 2;
+    payload.chapters = [{ id: 'old', no: 1, title: '', note: '', panels: [] }];
+    content = JSON.stringify(payload);
+    await assert.rejects(adapter.load());
+  });
+  await test('当前无 id 文件保存和 revision 闭环', async () => {
+    const db = model.defaultDb();
+    const chapter = model.newChapter(1, '当前');
+    chapter.panels = [model.newPanel([0, 100])];
+    db.chapters.push(chapter);
+    await adapter.save(db, 4);
+    const loaded = await adapter.load();
+    assert.strictEqual(loaded.revision, 5);
+    assert.strictEqual(loaded.db.chapters[0].panels[0].chars.join(','), '0,100');
+    assert.ok(!content.includes('"id"'));
+  });
+}
+
+async function idbPhase() {
+  console.log('\nIndexedDB 文档版本');
+  let rows = { meta: [], chapters: [] };
+  function request(result) {
+    const pending = { result };
+    Promise.resolve().then(() => pending.onsuccess());
+    return pending;
+  }
+  const database = {
+    transaction() {
+      const transaction = { objectStore: (name) => ({ getAll: () => request(rows[name]) }) };
+      setTimeout(() => transaction.oncomplete(), 0);
+      return transaction;
+    },
+  };
+  const idbEnv = loadSandbox(['model.js', 'adapters.js'], {
+    indexedDB: { open: () => request(database) },
+  });
+  const adapter = idbEnv.GD.adapters.createIndexedDbAdapter();
+  await test('全新空 IndexedDB 使用当前默认库', async () => {
+    const loaded = await adapter.load();
+    assert.strictEqual(loaded.db.schemaVersion, 2);
+    assert.strictEqual(loaded.db.chapters.length, 0);
+  });
+  await test('非空 IndexedDB 缺版本或旧版本必须拒绝', async () => {
+    for (const version of [undefined, 1, '2']) {
+      rows = { meta: [{ key: 'title', value: '旧库' }], chapters: [] };
+      if (version !== undefined) rows.meta.push({ key: 'schema_version', value: version });
+      await assert.rejects(adapter.load(), /schemaVersion=2/);
+    }
+    rows = { meta: [], chapters: [{ id: 'ch-kept', no: 1, panels: [] }] };
+    await assert.rejects(adapter.load(), /schemaVersion=2/);
+  });
+  await test('当前 IndexedDB 装载保留内部 id', async () => {
+    rows = {
+      meta: [{ key: 'schema_version', value: 2 }],
+      chapters: [{ id: 'ch-kept', no: 1, title: '', note: '', panels: [{ id: 'pn-kept', chars: [0, 100] }] }],
+    };
+    const loaded = await adapter.load();
+    assert.strictEqual(loaded.db.chapters[0].id, 'ch-kept');
+    assert.strictEqual(loaded.db.chapters[0].panels[0].id, 'pn-kept');
+  });
+}
+
+appPhase().then(httpPhase).then(filePhase).then(idbPhase).then(() => {
   console.log(`\n通过 ${passed} 项，失败 ${failures.length} 项`);
   if (failures.length) {
     failures.forEach((f) => console.error(`- ${f.name}: ${f.error.stack || f.error.message}`));

@@ -105,13 +105,13 @@ def exercise_readonly(base: str, label: str) -> None:
     text = body.decode("utf-8")
     exported = json.loads(text)
     check(f"{label}: 导出 JSON 结构正确",
-          exported["schema"] == "girls_dict"
+          exported["schema"] == "girls_dict" and exported["schemaVersion"] == 2
           and (not exported["chapters"] or set(exported["chapters"][0]) == {"no", "title", "note", "panels"}))
     for fmt, needle in (("csv", "话-分镜".encode("utf-8")), ("sqlite", b"SQLite format 3")):
         status, headers, body = request(f"{base}/api/db/export?format={fmt}")
         check(f"{label}: 导出 {fmt}", status == 200 and needle in body[:64])
 
-    for path, needle in [("/", b"girls_dict"), ("/index.html", b"js/model.js"), ("/js/model.js", b"buildPatch"),
+    for path, needle in [("/", b"js/model.js"), ("/index.html", b"js/model.js"), ("/js/model.js", b"buildPatch"),
                          ("/js/adapters.js", b"createIndexedDbAdapter"), ("/js/store.js", b"buildPatch"),
                          ("/js/ui.js", b"renderKeypad"), ("/js/app.js", b"export-sqlite"),
                          ("/css/styles.css", b"--accent")]:
@@ -144,6 +144,51 @@ def exercise_writes(base: str, label: str, sample: dict) -> None:
 
     status, health = get_json(f"{base}/api/health")
     check(f"{label}: 目标库是空的（可以安全写入）", health.get("chapters") == 0, f"{health.get('chapters')} 话")
+
+    check(f"{label}: health has current versions without migration", health.get("storageVersion") == 2
+          and health.get("exportVersion") == 2 and "migration" not in health)
+    status, _ = get_json(f"{base}/api/db/raw")
+    check(f"{label}: removed raw endpoint", status == 404)
+    for method, endpoint, body in [
+        ("PUT", "/api/db", sample),
+        ("POST", "/api/db/import", sample),
+        ("POST", "/api/db/validate", sample),
+        ("POST", "/api/db/import", {"db": sample, "path": "missing.json"}),
+        ("POST", "/api/db/import", {"db": sample, "archive": True}),
+        ("PUT", "/api/db", {"db": sample, "strict": True}),
+        ("POST", "/api/db/validate", {"db": sample, "unknown": True}),
+    ]:
+        status, _ = get_json(base + endpoint, method, body)
+        check(f"{label}: {method} {endpoint} rejects aliases/options {list(body)}", status == 400)
+    import copy
+    for field in ["version", "id", "chars", "unknown"]:
+        bad = copy.deepcopy(sample)
+        if field == "version":
+            bad["schemaVersion"] = 1
+        elif field == "id":
+            bad["chapters"][0]["panels"][0]["id"] = "old"
+        elif field == "chars":
+            bad["chapters"][0]["panels"][0]["chars"] = [2, 1]
+        else:
+            bad["meta"]["unknown"] = True
+        status, invalid = get_json(f"{base}/api/db/validate", "POST", {"db": bad})
+        check(f"{label}: validate rejects {field}", status == 200 and invalid.get("valid") is False
+              and bool(invalid.get("issues")))
+        status, invalid = get_json(f"{base}/api/db/import", "POST", {"db": bad})
+        check(f"{label}: import rejects {field} atomically", status == 422 and bool(invalid.get("issues"))
+              and get_json(f"{base}/api/db")[1]["revision"] == 0)
+    status, valid = get_json(f"{base}/api/db/validate", "POST", {"db": sample})
+    check(f"{label}: validate accepts external v2", status == 200 and valid.get("valid") is True)
+
+    from girls_db import normalize_document
+    no_ids = normalize_document(sample)
+    for chapter in no_ids["chapters"]:
+        chapter.pop("id")
+        for panel in chapter["panels"]:
+            panel.pop("id")
+    status, first = get_json(f"{base}/api/db", "PUT", {"db": no_ids})
+    check(f"{label}: first save accepts current internal shape without ids", status == 200
+          and bool(first.get("db", {}).get("chapters", [{}])[0].get("id")))
 
     # 用 import 灌样例：这个端点本身就是「整库替换」，不需要 revision
     status, imported = get_json(f"{base}/api/db/import", "POST", {"db": sample})
@@ -228,6 +273,16 @@ def exercise_writes(base: str, label: str, sample: dict) -> None:
 
     status, imported_again = get_json(f"{base}/api/db/import", "POST", {"db": sample})
     check(f"{label}: 再次导入样例成功", status == 200 and imported_again["chapters"] == 3)
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="http-import-", dir=ROOT / ".tmp-tests") as directory:
+        source = Path(directory) / "current.json"
+        source.write_text(json.dumps(sample), encoding="utf-8")
+        status, imported_file = get_json(f"{base}/api/db/import", "POST", {"path": str(source)})
+        check(f"{label}: explicit file import retains source", status == 200
+              and imported_file.get("chapters") == 3 and source.is_file())
+        source.write_text(json.dumps({**sample, "schemaVersion": 1}), encoding="utf-8")
+        status, _ = get_json(f"{base}/api/db/import", "POST", {"path": str(source)})
+        check(f"{label}: file import rejects legacy document", status == 422 and source.is_file())
 
 
 def main() -> int:
@@ -240,7 +295,8 @@ def main() -> int:
                         help="对 --base 指向的服务也做写入检查（危险：会覆盖那里的数据）")
     args = parser.parse_args()
 
-    sample = json.loads((ROOT / "data" / "sample.girls_dict.json").read_text(encoding="utf-8"))
+    from girls_db import normalize_document, strip_ids
+    sample = strip_ids(normalize_document(json.loads((ROOT / "data" / "sample.girls_dict.json").read_text(encoding="utf-8"))))
 
     if not args.spawn:
         try:

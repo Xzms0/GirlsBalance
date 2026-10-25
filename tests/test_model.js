@@ -49,6 +49,7 @@ function test(name, fn) {
 function messyDb() {
   return {
     schema: 'girls_dict',
+    schemaVersion: 2,
     revision: 7,
     meta: { title: '测试', charNames: { '3': '三号', 'abc': '非法', '200': '越界' } },
     chapters: [
@@ -84,7 +85,7 @@ test('编号范围固定为 [0,100]', () => {
 });
 test('schema 标识稳定', () => {
   assert.strictEqual(model.SCHEMA_NAME, 'girls_dict');
-  assert.ok(Number.isInteger(model.SCHEMA_VERSION));
+  assert.strictEqual(model.SCHEMA_VERSION, 2);
 });
 
 console.log('\n编号清洗');
@@ -122,7 +123,9 @@ test('校验只报告不修改', () => {
   const issues = model.validateDb(messyDb());
   assert.ok(issues.some((i) => i.level === 'error'));
   assert.ok(issues.some((i) => i.level === 'warn'));
-  sameRaw(model.validateDb({ chapters: [] }), []);
+  sameRaw(model.validateDb(model.defaultDb()), []);
+  assert.throws(() => model.normalizeDb({ chapters: [] }), /schemaVersion=2/);
+  assert.throws(() => model.normalizeDb({ schema: 'girls_dict', schemaVersion: 1, chapters: [] }), /schemaVersion=2/);
 });
 test('脏数据的问题清单稳定', () => {
   const issues = model.validateDb(messyDb());
@@ -209,9 +212,69 @@ test('不含任何内部 id', () => {
 });
 test('导出再导入内容不丢', () => {
   const exported = model.toExportDocument(fixture);
-  const restored = model.normalizeDb(JSON.parse(JSON.stringify(exported))).db;
+  const restored = model.parseExport(JSON.stringify(exported));
   same(model.toExportDocument(restored).chapters, exported.chapters);
   assert.ok(restored.chapters[0].id.startsWith('ch-'), '导入时应重新生成 id');
+});
+
+test('内部运行期规范化保留合法 id', () => {
+  const again = model.normalizeDb(model.clone(fixture)).db;
+  sameRaw(again.chapters, fixture.chapters);
+});
+
+test('外部无 id 文档通过严格校验并生成内部 id', () => {
+  const exported = model.toExportDocument(fixture);
+  exported.revision = 7;
+  exported.exportedAt = null;
+  assert.strictEqual(model.validateExportDocument(exported), exported);
+  const restored = model.parseExport(JSON.stringify(exported));
+  assert.strictEqual(restored.revision, 7);
+  assert.ok(restored.chapters[0].id);
+  assert.ok(restored.chapters[0].panels[0].id);
+});
+
+const invalidExports = [
+  ['缺版本', (d) => { delete d.schemaVersion; }],
+  ['旧版本', (d) => { d.schemaVersion = 1; }],
+  ['字符串版本', (d) => { d.schemaVersion = '2'; }],
+  ['错误 schema', (d) => { d.schema = 'other'; }],
+  ['未知顶层字段', (d) => { d.extra = true; }],
+  ['内部 updatedAt', (d) => { d.updatedAt = null; }],
+  ['错误时间类型', (d) => { d.exportedAt = 1; }],
+  ['负 revision', (d) => { d.revision = -1; }],
+  ['小数 revision', (d) => { d.revision = 0.5; }],
+  ['超出安全整数 revision', (d) => { d.revision = 9007199254740992; }],
+  ['缺 meta 字段', (d) => { delete d.meta.author; }],
+  ['未知 meta 字段', (d) => { d.meta.extra = ''; }],
+  ['错误标题类型', (d) => { d.meta.title = 0; }],
+  ['错误范围', (d) => { d.meta.charMax = 99; }],
+  ['数组名称', (d) => { d.meta.charNames = []; }],
+  ['非规范编号键', (d) => { d.meta.charNames['01'] = 'x'; }],
+  ['编号键带后缀', (d) => { d.meta.charNames['1x'] = 'x'; }],
+  ['越界编号键', (d) => { d.meta.charNames['101'] = 'x'; }],
+  ['非字符串名称', (d) => { d.meta.charNames['1'] = null; }],
+  ['非数组 chapters', (d) => { d.chapters = {}; }],
+  ['章节 id', (d) => { d.chapters[0].id = 'old'; }],
+  ['分镜 id', (d) => { d.chapters[0].panels[0].id = 'old'; }],
+  ['缺章节 note', (d) => { delete d.chapters[0].note; }],
+  ['错误章节号', (d) => { d.chapters[0].no = 2; }],
+  ['错误章节标题', (d) => { d.chapters[0].title = null; }],
+  ['非数组 panels', (d) => { d.chapters[0].panels = {}; }],
+  ['分镜未知字段', (d) => { d.chapters[0].panels[0].extra = 0; }],
+  ['缺 chars', (d) => { delete d.chapters[0].panels[0].chars; }],
+  ['裸数组分镜', (d) => { d.chapters[0].panels[0] = [1]; }],
+  ...[[2, 1], [1, 1], ['1'], [true], [-1], [101], [0.5]].map((chars) =>
+    ['非法 chars ' + JSON.stringify(chars), (d) => { d.chapters[0].panels[0].chars = chars; }]),
+];
+invalidExports.forEach(([label, mutate]) => test('严格导入拒绝：' + label, () => {
+  const payload = JSON.parse(JSON.stringify(model.toExportDocument(fixture)));
+  mutate(payload);
+  assert.throws(() => model.validateExportDocument(payload));
+  assert.throws(() => model.parseExport(JSON.stringify(payload)));
+}));
+test('空文件与空白文件拒绝导入', () => {
+  assert.throws(() => model.parseExport(''));
+  assert.throws(() => model.parseExport('  '));
 });
 
 console.log('\n增量补丁（保存时只发变化的部分）');

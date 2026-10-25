@@ -3,18 +3,14 @@
  * girls_dict（超超你的字典）本地服务端 —— Node 版（SQLite 存储）。
  *
  * 与 server/server.py 暴露完全相同的 REST 接口与 JSON 结构，任选其一运行即可。
- * 只用 Node 内置模块（http / node:sqlite），零第三方依赖。它做三件事：
+ * 只用 Node 内置模块（http / node:sqlite），零第三方依赖。它做两件事：
  *
  * 1. 把 public/（本机管理端）当静态网站托管；
  * 2. 暴露读写 data/girls_dict.sqlite3 的 REST 接口（补丁式增量写入 + 只读查询）；
- * 3. 首次启动时，如果旁边还有旧版的 data/girls_dict.json，自动迁移进 SQLite
- *    并把旧文件归档到 data/legacy/（绝不删除）。
- *
  * 运行：
  *   node server/server.js
  *   node server/server.js --port 9000 --open
  *   node server/server.js --data D:/xiachao/girls_dict.sqlite3
- *   node server/server.js --migrate-json D:/old/girls_dict.json   # 手工迁移后退出
  */
 
 'use strict';
@@ -36,7 +32,6 @@ const MAX_BODY = 64 * 1024 * 1024;
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_PUBLIC = path.join(ROOT, 'public');
 const DEFAULT_DATA = path.join(ROOT, 'data', 'girls_dict.sqlite3');
-const DEFAULT_LEGACY = path.join(ROOT, 'data', 'girls_dict.json');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -57,7 +52,7 @@ const MIME = {
 };
 
 const ENDPOINTS = [
-  { method: 'GET', path: '/api/health', desc: '服务信息、数据库文件、版本号、迁移情况' },
+  { method: 'GET', path: '/api/health', desc: '服务信息、数据库文件、版本号' },
   { method: 'GET', path: '/api/index', desc: '轻量目录：每话的计数与元信息，不含槽位内容' },
   { method: 'GET', path: '/api/chapters/{id}', desc: '读取一话（含槽位与角色编号）' },
   { method: 'GET', path: '/api/chapters/{id}/panels/{pid}', desc: '读取单个槽位' },
@@ -68,7 +63,6 @@ const ENDPOINTS = [
   { method: 'POST', path: '/api/db/clear', desc: '清空所有数据' },
   { method: 'POST', path: '/api/db/validate', desc: '只校验不写入' },
   { method: 'GET', path: '/api/db/export?format=json|csv|sqlite', desc: '导出 JSON / CSV / SQLite' },
-  { method: 'GET', path: '/api/db/raw', desc: 'JSON 文本' },
   { method: 'GET', path: '/api/stats', desc: '角色出场次数等派生统计' },
   { method: 'GET', path: '/api/find?char=12', desc: '某个角色出现在哪些话/槽位' },
   { method: 'GET', path: '/api/search?q=文字', desc: '按标题/备注/角色名搜索' },
@@ -94,8 +88,6 @@ function parseArgs(argv) {
     quiet: false,
     allowOrigin: [],
     backupInterval: db.DEFAULT_BACKUP_INTERVAL,
-    legacyJson: DEFAULT_LEGACY,
-    migrateJson: '',
     check: false,
     help: false,
   };
@@ -110,10 +102,9 @@ function parseArgs(argv) {
     else if (arg === '--quiet') options.quiet = true;
     else if (arg === '--allow-origin') options.allowOrigin.push(next());
     else if (arg === '--backup-interval') options.backupInterval = Number(next());
-    else if (arg === '--legacy-json') options.legacyJson = next();
-    else if (arg === '--migrate-json') options.migrateJson = next();
     else if (arg === '--check') options.check = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
+    else throw badRequest(`未知参数：${arg}`);
   }
   return options;
 }
@@ -155,7 +146,6 @@ function createApp(options, existingDatabase) {
   const database = existingDatabase || (() => {
     const created = new db.GirlsDB(options.data, {
       backupInterval: options.backupInterval,
-      legacyJson: options.legacyJson || null,
     });
     created.initialize();
     return created;
@@ -275,7 +265,6 @@ function createApp(options, existingDatabase) {
         backupDir: database.backupDir,
         revision: index.revision, updatedAt: index.updatedAt,
         chapters: index.stats.chapters, panels: index.stats.panels,
-        migration: database.migration,
         time: localIsoSeconds(),
       }, origin);
     }
@@ -283,11 +272,6 @@ function createApp(options, existingDatabase) {
     if (pathname === '/api/db') {
       const document = database.loadDocument();
       return sendJson(res, 200, { ok: true, revision: document.revision, db: document }, origin);
-    }
-    if (pathname === '/api/db/raw') {
-      // 数据库是 SQLite；这里返回导出格式 JSON
-      return send(res, 200, Buffer.from(database.exportJson(), 'utf8'),
-        'application/json; charset=utf-8', null, origin);
     }
     if (pathname === '/api/db/export') {
       const format = (query.get('format') || 'json').toLowerCase();
@@ -346,9 +330,15 @@ function createApp(options, existingDatabase) {
   };
 
   /* ---- 路由：写入 ---------------------------------------------------- */
+  const envelope = (payload, allowed) => {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw badRequest('请求体必须是对象');
+    if (Object.keys(payload).some((key) => !allowed.includes(key))) throw badRequest('请求体包含未知字段');
+  };
   const apiPutDb = (payload) => {
-    if ('db' in payload && payload.db === null) throw badRequest('db 字段不能为 null');
-    const document = payload.db === undefined ? payload : payload.db;
+    envelope(payload, ['db', 'revision', 'force']);
+    if (!Object.hasOwn(payload, 'db')) throw badRequest('缺少 db 字段');
+    if (payload.db === null) throw badRequest('db 字段不能为 null');
+    const document = payload.db;
     const revision = (payload.revision === undefined || payload.revision === null) ? null : payload.revision;
     const explicitForce = !!payload.force;
     // 整库替换是「覆盖一切」的操作，必须表明意图：
@@ -361,7 +351,6 @@ function createApp(options, existingDatabase) {
     const result = database.replaceAll(document, {
       expectedRevision: revision,
       force: explicitForce || revision === null,
-      strict: !!payload.strict,
       label: 'replace',
     });
     // 整库替换的返回体带上替换后的整份文档（前端可直接换掉本地镜像）
@@ -379,15 +368,19 @@ function createApp(options, existingDatabase) {
       return { status: 200, body: Object.assign({ ok: true }, result) };
     }
     if (pathname === '/api/db/import') {
-      if ('db' in payload && payload.db === null) throw badRequest('db 字段不能为 null');
-      const result = typeof payload.path === 'string'
-        ? database.importJson(payload.path, { archive: !!payload.archive })
-        : database.importJson(payload.db === undefined ? payload : payload.db, { archive: false });
+      envelope(payload, ['db', 'path']);
+      const hasDb = Object.hasOwn(payload, 'db');
+      const hasPath = Object.hasOwn(payload, 'path');
+      if (hasDb === hasPath) throw badRequest('必须且只能提供 db 或 path');
+      if (hasDb && payload.db === null) throw badRequest('db 字段不能为 null');
+      if (hasPath && typeof payload.path !== 'string') throw badRequest('path 必须是字符串');
+      const result = database.importJson(hasPath ? payload.path : payload.db);
       return { status: 200, body: Object.assign({ ok: true }, result) };
     }
     if (pathname === '/api/db/validate') {
-      const issues = [];
-      db.normalizeDocument(payload.db === undefined ? payload : payload.db, issues);
+      envelope(payload, ['db']);
+      if (!Object.hasOwn(payload, 'db')) throw badRequest('缺少 db 字段');
+      const issues = db.validateExportDocument(payload.db);
       const errors = issues.filter((item) => item.level === 'error');
       return { status: 200, body: { ok: true, valid: errors.length === 0, issues } };
     }
@@ -501,21 +494,12 @@ async function main() {
   if (options.help) {
     console.log('用法：node server/server.js [--data 文件] [--public 目录] [--host 地址] [--port 端口]');
     console.log('                          [--open] [--quiet] [--allow-origin 来源] [--backup-interval 秒]');
-    console.log('                          [--legacy-json 文件] [--migrate-json 文件] [--check]');
+    console.log('                          [--check]（只做自检后退出）');
     return 0;
   }
 
   const publicDir = path.resolve(options.public);
-  const legacy = options.legacyJson ? path.resolve(options.legacyJson) : null;
 
-  if (options.migrateJson) {
-    const source = path.resolve(options.migrateJson);
-    const database = new db.GirlsDB(options.data, { backupInterval: 0, legacyJson: null });
-    database.initialize();
-    const result = database.importJson(source, { archive: true });
-    console.log(JSON.stringify(result, null, 2));
-    return 0;
-  }
 
   if (!fs.existsSync(publicDir)) {
     console.error(`找不到前端目录：${publicDir}`);
@@ -523,7 +507,7 @@ async function main() {
   }
 
   const database = new db.GirlsDB(options.data, {
-    backupInterval: options.backupInterval, legacyJson: legacy,
+    backupInterval: options.backupInterval,
   });
   database.initialize();
 
@@ -532,7 +516,7 @@ async function main() {
     console.log(JSON.stringify({
       ok: true, storage: 'sqlite', dataFile: database.path,
       size: database.dbSize(), revision: index.revision,
-      stats: index.stats, migration: database.migration,
+      stats: index.stats,
       issues: database.integrityCheck(),
     }, null, 2));
     return 0;
@@ -546,11 +530,6 @@ async function main() {
     console.log(`│  前端页面 : ${url}`);
     console.log(`│  数据库   : ${database.path}`);
     console.log(`│  备份目录 : ${database.backupDir}`);
-    if (database.migration && database.migration.ok) {
-      console.log(`│  已迁移   : ${database.migration.source} → ` +
-        `${database.migration.chapters} 话 / ${database.migration.panels} 槽位`);
-      if (database.migration.archived) console.log(`│  （旧 JSON 已归档到 ${database.migration.archived}）`);
-    }
     console.log('└─ Ctrl+C 停止服务');
   }
   if (options.open) setTimeout(() => openBrowser(url), 600);

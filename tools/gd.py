@@ -18,7 +18,6 @@
     python tools/gd.py backup --tag before-edit
     python tools/gd.py backups
     python tools/gd.py restore girls_dict-20260214-101500.sqlite3
-    python tools/gd.py migrate --from data/legacy/girls_dict.json   # 从旧 JSON 迁移进来
 """
 
 from __future__ import annotations
@@ -38,6 +37,7 @@ from girls_db import (  # noqa: E402
     GirlsDB,
     OpError,
     RevisionConflict,
+    ValidationError,
     clean_chars,
     normalize_document,
     new_id,
@@ -101,11 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_restore = sub.add_parser("restore", help="回滚到某个快照")
     p_restore.add_argument("name")
 
-    p_migrate = sub.add_parser("migrate", help="把旧版单文件 JSON 迁移进 SQLite（源文件会归档）")
-    p_migrate.add_argument("--from", dest="source", required=True)
-    p_migrate.add_argument("--keep", action="store_true", help="不归档源文件")
-
-    p_import = sub.add_parser("import", help="导入 JSON（整库替换，默认不归档源文件）")
+    p_import = sub.add_parser("import", help="导入严格 v2 JSON（整库替换，保留源文件）")
     p_import.add_argument("source")
 
     return parser
@@ -300,13 +296,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"已回滚到 {args.name}，当前 revision={result['revision']}")
         return 0
 
-    if command in ("migrate", "import"):
+    if command == "import":
         source = Path(args.source)
         if not source.is_file():
             print(f"找不到文件：{source}", file=sys.stderr)
             return 1
-        archive = command == "migrate" and not getattr(args, "keep", False)
-        result = database.import_json(source, archive=archive)
+        result = database.import_json(source)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
 
@@ -318,6 +313,6 @@ if __name__ == "__main__":
     harden_stdio()
     try:
         raise SystemExit(main())
-    except (RevisionConflict, OpError) as error:
+    except (RevisionConflict, OpError, ValidationError) as error:
         print(f"执行失败：{error}", file=sys.stderr)
         raise SystemExit(1)

@@ -1,6 +1,6 @@
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "exportedAt": "2026-01-01T00:00:00Z",
   "meta": {
     "title": "超超你的字典 · 示例",
@@ -45,7 +45,7 @@
       "panels": [
         { "chars": [1, 5] },
         { "chars": [100] },
-        { "chars": [100, 23] }
+        { "chars": [23, 100] }
       ]
     }
   ]

@@ -90,8 +90,8 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```json
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
-  "formatVersion": 2,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "revision": 6642,
   "exportedAt": "2026-10-18T13:22:04+00:00",
   "totalChapters": 41,
@@ -107,7 +107,6 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
       "char": 0,
       "name": "爱城恋太郎",
       "count": 1478,
-      "panels": 1478,
       "points": 731.4,
       "weighted": 524.1,
       "firstChapter": 1
@@ -121,8 +120,8 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```json
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
-  "formatVersion": 2,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "revision": 6642,
   "exportedAt": "2026-10-18T13:22:04+00:00",
   "title": "超超你的字典",
@@ -137,8 +136,8 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```json
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
-  "formatVersion": 2,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "revision": 6642,
   "chapters": [
     {
@@ -163,7 +162,8 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```json
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "no": 1,
   "title": "相遇",
   "note": "",
@@ -201,7 +201,7 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
 ```json
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "exportedAt": "2026-10-14T10:20:30Z",
   "meta": {
     "title": "超超你的字典",
@@ -220,6 +220,18 @@ CREATE TABLE change_log (      -- 最近改动（自动裁到 2000 条）
   ]
 }
 ```
+
+### API 与导入
+
+- `GET /api/db`：读取内部文档（含 id）。
+- `PUT /api/db`：用 `{db, revision?, force?}` 保存完整内部文档；保留版本冲突与防误覆盖检查。
+- `POST /api/db/patch`：`{revision, ops}` 增量保存；整库 `replace` 操作只接受 `db`。
+- `POST /api/db/import`：`{db}` 导入严格完整 JSON，或 `{path}` 导入服务器上的 JSON 文件，二选一；不移动或归档源文件。
+- `POST /api/db/validate`：`{db}` 校验完整 JSON，不写入。
+- `GET /api/db/export?format=json|csv|sqlite`：导出；JSON 文本统一通过此接口读取。
+- `GET /api/backups`、`POST /api/backups`、`POST /api/backups/restore`：快照列表、创建与恢复。
+
+命令行导入：`python tools/gd.py import current.json`。程序不再提供自动迁移、迁移参数或旧字段别名。公开分片使用 `schemaVersion: 2`、`formatVersion: 3`，角色计数只保留 `count`，最大计数只保留 `maxCount`。
 
 ### CSV 导出
 

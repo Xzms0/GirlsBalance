@@ -36,7 +36,7 @@ const pretty = require('./json_pretty.js');
 
 const SCHEMA_NAME = 'girls_dict';
 const STORAGE_VERSION = 2; // SQLite 存储结构版本
-const EXPORT_VERSION = 1; // 导出/导入用 JSON 的版本
+const EXPORT_VERSION = 2; // 导出/导入用 JSON 的版本
 const CHAR_MIN = 0;
 const CHAR_MAX = 100;
 
@@ -188,6 +188,12 @@ function isPlainObject(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function checkOptions(options, allowed) {
+  if (!isPlainObject(options) || Object.keys(options).some((key) => !allowed.includes(key))) {
+    throw new TypeError('未知参数');
+  }
+}
+
 /** node:sqlite 返回的行是 null 原型对象；转成普通对象，行为与 Python 的 dict(row) 一致。 */
 function plain(row) {
   return Object.assign({}, row);
@@ -239,6 +245,8 @@ function normalizeChapter(raw, index, issues, seenIds) {
     return null;
   }
   const seen = seenIds || new Set();
+  // 内部修复保留有效 id（用于增量保存）；外部 JSON 必须先通过 validateExportDocument，
+  // 那里会拒绝任何话/槽位 id，因此这里不存在"接受旧 id"的兼容路径。
   let chapterId = raw.id;
   if (typeof chapterId !== 'string' || !chapterId || seen.has(chapterId)) chapterId = newId('ch');
   seen.add(chapterId);
@@ -249,6 +257,7 @@ function normalizeChapter(raw, index, issues, seenIds) {
     issue(issues, 'error', `${where}.panels`, 'panels 不是数组，已重置为空');
     panelsIn = [];
   }
+  // 这里只接收 {chars:[...]} 槽位对象；裸编号数组槽位不会转换，而会报错并丢弃。
   const panels = [];
   panelsIn.forEach((rawPanel, pindex) => {
     const pwhere = `${where}.panels[${pindex}]`;
@@ -279,6 +288,8 @@ function normalizeDocument(raw, issues, title = '超超你的字典') {
     issue(bucket, 'error', '$', '顶层不是 JSON 对象，已重置为空文档');
     source = {};
   }
+  // 内部运行期修复工具：补齐默认值、清理非法项并维持身份唯一。
+  // 外部文档和整库替换必须先通过各自的严格边界校验。
   const seen = new Set();
   let chaptersIn = source.chapters;
   if (chaptersIn === undefined || chaptersIn === null) chaptersIn = [];
@@ -319,6 +330,62 @@ function normalizeDocument(raw, issues, title = '超超你的字典') {
     },
     chapters,
   };
+}
+
+/** Strict document boundary; normalization is only a runtime repair tool. */
+function validateShape(raw, internal = false) {
+  const issues = [];
+  const error = (at, message) => issue(issues, 'error', at, message);
+  const object = (value, at, required, optional = []) => {
+    if (!isPlainObject(value)) { error(at, '必须是对象'); return false; }
+    required.forEach((key) => { if (!Object.hasOwn(value, key)) error(`${at}.${key}`, '缺少必需字段'); });
+    Object.keys(value).forEach((key) => { if (![...required, ...optional].includes(key)) error(`${at}.${key}`, '未知字段'); });
+    return true;
+  };
+  const integer = (value) => Number.isSafeInteger(value) && value >= 0;
+  const text = (value, at) => { if (typeof value !== 'string') error(at, '必须是字符串'); };
+  if (!object(raw, '$', ['schema', 'schemaVersion', ...(internal ? ['revision', 'updatedAt'] : []), 'meta', 'chapters'], internal ? [] : ['exportedAt', 'revision'])) return issues;
+  if (raw.schema !== SCHEMA_NAME) error('schema', '必须是 girls_dict');
+  if (raw.schemaVersion !== EXPORT_VERSION) error('schemaVersion', '必须是 2');
+  if ('revision' in raw && !integer(raw.revision)) error('revision', '必须是非负整数');
+  const stamp = internal ? 'updatedAt' : 'exportedAt';
+  if (stamp in raw && raw[stamp] !== null) text(raw[stamp], stamp);
+  if (object(raw.meta, 'meta', ['title', 'author', 'charMin', 'charMax', 'charNames'])) {
+    text(raw.meta.title, 'meta.title'); text(raw.meta.author, 'meta.author');
+    if (raw.meta.charMin !== 0) error('meta.charMin', '必须是 0');
+    if (raw.meta.charMax !== 100) error('meta.charMax', '必须是 100');
+    if (!isPlainObject(raw.meta.charNames)) error('meta.charNames', '必须是对象');
+    else Object.entries(raw.meta.charNames).forEach(([key, value]) => {
+      if (!/^(0|[1-9]\d?|100)$/.test(key)) error(`meta.charNames.${key}`, '必须是 0..100 的规范编号键');
+      text(value, `meta.charNames.${key}`);
+    });
+  }
+  const ids = new Set();
+  const id = (value, at) => { if (typeof value !== 'string' || !value || ids.has(value)) error(at, 'id 必须是全局唯一的非空字符串'); else ids.add(value); };
+  if (!Array.isArray(raw.chapters)) error('chapters', '必须是数组');
+  else raw.chapters.forEach((chapter, index) => {
+    const at = `chapters[${index}]`;
+    if (!object(chapter, at, ['no', 'title', 'note', 'panels'], internal ? ['id'] : [])) return;
+    if (internal && 'id' in chapter) id(chapter.id, `${at}.id`);
+    if (!Number.isSafeInteger(chapter.no) || chapter.no !== index + 1) error(`${at}.no`, '必须等于数组位置 + 1');
+    text(chapter.title, `${at}.title`); text(chapter.note, `${at}.note`);
+    if (!Array.isArray(chapter.panels)) error(`${at}.panels`, '必须是数组');
+    else chapter.panels.forEach((panel, pi) => {
+      const pat = `${at}.panels[${pi}]`;
+      if (!object(panel, pat, ['chars'], internal ? ['id'] : [])) return;
+      if (internal && 'id' in panel) id(panel.id, `${pat}.id`);
+      if (!Array.isArray(panel.chars)) error(`${pat}.chars`, '必须是数组');
+      else if (panel.chars.some((char, i) => !Number.isSafeInteger(char) || char < 0 || char > 100 || (i > 0 && panel.chars[i - 1] >= char))) error(`${pat}.chars`, '必须是 0..100 唯一升序整数');
+    });
+  });
+  return issues;
+}
+function validateExportDocument(raw) { return validateShape(raw); }
+function validateInternalDocument(raw) { return validateShape(raw, true); }
+function requireExportDocument(raw) {
+  const issues = validateExportDocument(raw);
+  if (issues.length) throw new ValidationError(issues);
+  return raw;
 }
 
 /** 一份空文档（规范化后的样子）。 */
@@ -391,9 +458,10 @@ function wrapDbError(error) {
 class GirlsDB {
   /**
    * @param {string} dbPath SQLite 文件路径
-   * @param {object} [options] {backupDir, backupInterval, backupKeep, title, legacyJson}
+   * @param {object} [options] {backupDir, backupInterval, backupKeep, title}
    */
   constructor(dbPath, options = {}) {
+    checkOptions(options, ['backupDir', 'backupInterval', 'backupKeep', 'title']);
     this.path = path.resolve(dbPath);
     this.backupDir = options.backupDir
       ? path.resolve(options.backupDir)
@@ -402,12 +470,7 @@ class GirlsDB {
       ? DEFAULT_BACKUP_INTERVAL : Number(options.backupInterval);
     this.backupKeep = options.backupKeep === undefined ? DEFAULT_BACKUP_KEEP : Number(options.backupKeep);
     this.title = options.title || '超超你的字典';
-    // 旧版单文件 JSON：只在数据库文件还不存在时用来做一次性迁移
-    this.legacyJson = options.legacyJson
-      ? path.resolve(options.legacyJson)
-      : (path.extname(this.path) !== '.json' ? path.join(path.dirname(this.path), 'girls_dict.json') : null);
     this.lastIssues = [];
-    this.migration = null;
   }
 
   /* ---------------------------------------------------------------- *
@@ -443,68 +506,26 @@ class GirlsDB {
     }
   }
 
-  /** 建表；如果这是首次创建，顺便尝试从旧版 JSON 迁移。 */
+  /** Fresh databases are initialized; existing storage versions are never upgraded. */
   initialize() {
     const fresh = !this.exists();
     const conn = this.connect();
     try {
-      conn.exec(SCHEMA_SQL);
-      if (fresh || this.info(conn, 'schema_version') === null) {
+      if (!fresh) {
+        const hasInfo = conn.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='info'").get();
+        if (!hasInfo || this.info(conn, 'schema_version') !== String(STORAGE_VERSION)) {
+          throw new ValidationError([{level: 'error', path: 'schema_version', message: 'SQLite 存储版本必须是 2'}]);
+        }
+      } else {
+        conn.exec(SCHEMA_SQL);
         this.setInfo(conn, 'schema_version', String(STORAGE_VERSION));
         this.setInfo(conn, 'title', this.title);
         this.setInfo(conn, 'author', '');
-        if (this.info(conn, 'revision') === null) {
-          this.setInfo(conn, 'revision', '0');
-          this.setInfo(conn, 'updated_at', '');
-        }
+        this.setInfo(conn, 'revision', '0');
+        this.setInfo(conn, 'updated_at', '');
       }
-      if (fresh) this.migration = this.autoMigrate(conn);
-    } finally {
-      conn.close();
-    }
-    return { fresh, migration: this.migration };
-  }
-
-  /** 数据库是新建的，而旁边还躺着一份旧版 JSON —— 把它迁进来并归档。 */
-  autoMigrate(conn) {
-    const source = this.legacyJson;
-    if (!source || !fs.existsSync(source) || !fs.statSync(source).isFile()) return null;
-    let summary;
-    try {
-      summary = this.importInto(conn, source);
-    } catch (error) {
-      // 迁移失败也不能毁掉原文件
-      return { ok: false, source: String(source), error: error.message };
-    }
-    const archived = this.archiveLegacy(source);
-    return Object.assign({}, summary, {
-      ok: true,
-      source: String(source),
-      archived: archived ? String(archived) : null,
-    });
-  }
-
-  /** 把迁移完的旧 JSON 挪到 legacy/ 存档（绝不删除；跨盘时退化成复制 + 删源）。 */
-  archiveLegacy(source) {
-    const targetDir = path.join(path.dirname(source), 'legacy');
-    const ext = path.extname(source);
-    const target = path.join(targetDir, `${path.basename(source, ext)}-migrated-${fileStamp()}${ext}`);
-    try {
-      fs.mkdirSync(targetDir, { recursive: true });
-      fs.renameSync(source, target);
-      return target;
-    } catch (error) {
-      if (error && error.code === 'EXDEV') {
-        try {
-          fs.copyFileSync(source, target);
-          fs.unlinkSync(source);
-          return target;
-        } catch (copyError) {
-          return null;
-        }
-      }
-      return null;
-    }
+    } finally { conn.close(); }
+    return { fresh };
   }
 
   /* ---------------------------------------------------------------- *
@@ -584,13 +605,16 @@ class GirlsDB {
     const charNames = {};
     Object.keys(names).forEach((key) => { charNames[String(key)] = names[key]; });
 
+    // 只有 info 表里确实没有 title 行（null）时才回退到默认标题。
+    // 空字符串是合法的当前格式标题，不能因为真值判断被替换成默认值。
+    const storedTitle = this.info(conn, 'title');
     return {
       schema: SCHEMA_NAME,
       schemaVersion: EXPORT_VERSION,
       revision,
       updatedAt,
       meta: {
-        title: this.info(conn, 'title') || this.title,
+        title: storedTitle === null ? this.title : storedTitle,
         author: this.info(conn, 'author') || '',
         charMin: CHAR_MIN,
         charMax: CHAR_MAX,
@@ -932,7 +956,8 @@ class GirlsDB {
   }
 
   _op_meta_update(conn, op) {
-    if (typeof op.title === 'string' && op.title.trim()) this.setInfo(conn, 'title', op.title);
+    // 只做类型判断：空字符串是合法的"清空标题"操作，不能当作没有提供而忽略。
+    if (typeof op.title === 'string') this.setInfo(conn, 'title', op.title);
     if (typeof op.author === 'string') this.setInfo(conn, 'author', op.author);
   }
 
@@ -966,12 +991,17 @@ class GirlsDB {
   }
 
   _op_replace(conn, op, issues) {
-    const raw = op.db === undefined ? op.document : op.db;
+    if (Object.hasOwn(op, 'document')) throw new OpError(0, '不支持 document 字段');
+    const raw = op.db;
     if (raw === undefined || raw === null) throw new OpError(0, '缺少 db 字段');
     if (!isPlainObject(raw)) throw new OpError(0, 'db 必须是对象');
+    const invalid = validateInternalDocument(raw);
+    if (invalid.length) throw new ValidationError(invalid);
     const document = normalizeDocument(raw, issues, this.title);
     this.writeDocument(conn, document);
-    if (document.meta.title) this.setInfo(conn, 'title', document.meta.title);
+    // 严格文档里的 meta.title 一定是字符串（可以为空）；空字符串也要原样写入，
+    // 不能用真值判断跳过，否则读回时标题会被默认值替换。
+    this.setInfo(conn, 'title', document.meta.title);
     this.setInfo(conn, 'author', document.meta.author || '');
   }
 
@@ -1024,7 +1054,9 @@ class GirlsDB {
     Object.keys(names).forEach((key) => {
       const number = parseIntStrict(key);
       const name = names[key];
-      if (number !== null && number >= CHAR_MIN && number <= CHAR_MAX && typeof name === 'string' && name.trim()) {
+      // 空字符串是合法的角色名（表示暂未命名），要按原样保留；
+      // 这里只校验编号键与值类型，不再用 trim() 作为"是否写入"的条件。
+      if (number !== null && number >= CHAR_MIN && number <= CHAR_MAX && typeof name === 'string') {
         conn.prepare('INSERT OR REPLACE INTO char_name(char, name) VALUES(?,?)').run(number, name);
       }
     });
@@ -1042,11 +1074,12 @@ class GirlsDB {
 
   /* ---- 整库替换 / 导入 ------------------------------------------------- */
   /**
-   * 整库替换。strict 参数只为对齐 Python 接口而保留，两边都不使用它。
+   * 整库替换（严格内部文档）。
    * 与 Python 的 replace_all 一致：带上 includeDocument，调用方能直接拿到替换后的整库
    * （整库替换本来就把整份文档送进来了，回一份方便前端更新镜像）。
    */
   replaceAll(raw, options = {}) {
+    checkOptions(options, ['expectedRevision', 'force', 'label']);
     return this.applyPatch([{ op: 'replace', db: raw }], {
       expectedRevision: options.expectedRevision,
       force: options.force === undefined ? true : options.force,
@@ -1057,24 +1090,14 @@ class GirlsDB {
 
   /** 把一份 JSON 文件写进当前连接（调用方负责事务）。 */
   importInto(conn, sourcePath) {
-    const text = fs.readFileSync(sourcePath, 'utf8');
-    let document;
-    if (!text.trim()) {
-      document = normalizeDocument({ chapters: [] }, [], this.title);
-    } else {
-      let parsed;
-      try {
-        parsed = JSON.parse(text);
-      } catch (error) {
-        throw new SyntaxError(`${path.basename(sourcePath)} 不是合法 JSON：${error.message}`);
-      }
-      document = normalizeDocument(parsed, [], this.title);
-    }
+    const parsed = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+    const document = normalizeDocument(requireExportDocument(parsed), [], this.title);
     conn.exec('BEGIN IMMEDIATE');
     let revision;
     try {
       this.writeDocument(conn, document);
-      if (document.meta.title) this.setInfo(conn, 'title', document.meta.title);
+      // 空标题同样原样保存（validateExportDocument 只要求字符串类型）。
+      this.setInfo(conn, 'title', document.meta.title);
       this.setInfo(conn, 'author', document.meta.author || '');
       revision = this.bumpRevision(conn, 'import', path.basename(sourcePath));
       conn.exec('COMMIT');
@@ -1096,9 +1119,9 @@ class GirlsDB {
     };
   }
 
-  /** 从 JSON 文件（或直接给对象）导入，可顺带把源文件归档。 */
+  /** 从 JSON 文件（或直接给对象）导入，源文件保持不变。 */
   importJson(source, options = {}) {
-    const archive = !!options.archive;
+    checkOptions(options, ['label']);
     const label = options.label === undefined ? 'import' : String(options.label);
     const conn = this.connect();
     try {
@@ -1111,12 +1134,13 @@ class GirlsDB {
         }
         stats = this.importInto(conn, target);
       } else {
-        const document = normalizeDocument(source, [], this.title);
+        const document = normalizeDocument(requireExportDocument(source), [], this.title);
         conn.exec('BEGIN IMMEDIATE');
         let revision;
         try {
           this.writeDocument(conn, document);
-          if (document.meta.title) this.setInfo(conn, 'title', document.meta.title);
+          // 对象导入与文件导入使用同一规则：空标题也原样保存。
+          this.setInfo(conn, 'title', document.meta.title);
           this.setInfo(conn, 'author', document.meta.author || '');
           revision = this.bumpRevision(conn, label, 'object');
           conn.exec('COMMIT');
@@ -1136,10 +1160,6 @@ class GirlsDB {
           chars: document.chapters.reduce(
             (sum, chapter) => sum + chapter.panels.reduce((inner, panel) => inner + panel.chars.length, 0), 0),
         };
-      }
-      if (archive && stats.source !== '(object)') {
-        const archived = this.archiveLegacy(stats.source);
-        stats.archived = archived ? String(archived) : null;
       }
       return stats;
     } finally {
@@ -1245,7 +1265,7 @@ class GirlsDB {
     }
     if (this.exists()) this.createBackup('before-restore');
     const snapshot = new GirlsDB(source, {
-      backupDir: this.backupDir, backupInterval: 0, title: this.title, legacyJson: null,
+      backupDir: this.backupDir, backupInterval: 0, title: this.title,
     });
     const document = snapshot.loadDocument();
     const conn = this.connect();
@@ -1253,7 +1273,8 @@ class GirlsDB {
       conn.exec('BEGIN IMMEDIATE');
       try {
         this.writeDocument(conn, document);
-        this.setInfo(conn, 'title', document.meta.title || this.title);
+        // 快照里的空标题也要保持为空，不能替换成当前实例的默认标题。
+        this.setInfo(conn, 'title', document.meta.title);
         this.setInfo(conn, 'author', document.meta.author || '');
         const revision = this.bumpRevision(conn, 'restore', path.basename(name));
         conn.exec('COMMIT');
@@ -1354,6 +1375,8 @@ module.exports = {
   cleanChars,
   normalizeChapter,
   normalizeDocument,
+  validateExportDocument,
+  validateInternalDocument,
   defaultDocument,
   stripIds,
   GirlsDB,

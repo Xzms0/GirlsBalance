@@ -51,11 +51,9 @@ from json_pretty import dumps as pretty_json
 
 SCHEMA_NAME = "girls_dict"
 STORAGE_VERSION = 2          # SQLite 存储结构版本
-EXPORT_VERSION = 1           # 导出/导入用 JSON 的版本
+EXPORT_VERSION = 2           # 导出/导入用 JSON 的版本
 CHAR_MIN = 0
 CHAR_MAX = 100
-
-_UNSET = object()            # 区分「没传 legacy_json」和「显式传 None」
 
 DEFAULT_BACKUP_INTERVAL = 600.0
 DEFAULT_BACKUP_KEEP = 20
@@ -137,6 +135,7 @@ def normalize_chapter(raw: Any, index: int, issues: Optional[List[Dict[str, str]
         _issue(issues, "error", where, "话记录不是对象，已丢弃")
         return None
     seen = seen_ids if seen_ids is not None else set()
+    # 内部修复保留有效 id；外部导入先严格校验。
     chapter_id = raw.get("id")
     if not isinstance(chapter_id, str) or not chapter_id or chapter_id in seen:
         chapter_id = new_id("ch")
@@ -148,6 +147,7 @@ def normalize_chapter(raw: Any, index: int, issues: Optional[List[Dict[str, str]
     if not isinstance(panels_in, list):
         _issue(issues, "error", f"{where}.panels", "panels 不是数组，已重置为空")
         panels_in = []
+    # 这里只接收 {chars:[...]} 槽位对象；裸编号数组槽位不会转换，而会报错并丢弃。
     panels: List[Dict[str, Any]] = []
     for pindex, raw_panel in enumerate(panels_in):
         pwhere = f"{where}.panels[{pindex}]"
@@ -177,6 +177,8 @@ def normalize_document(raw: Any, issues: Optional[List[Dict[str, str]]] = None,
     if not isinstance(raw, dict):
         _issue(issues, "error", "$", "顶层不是 JSON 对象，已重置为空文档")
         raw = {}
+    # 内部运行期修复工具：补齐默认值、清理非法项并维持身份唯一。
+    # 外部文档和整库替换必须先通过各自的严格边界校验。
     seen: set = set()
     chapters_in = raw.get("chapters")
     if chapters_in is None:
@@ -213,6 +215,112 @@ def normalize_document(raw: Any, issues: Optional[List[Dict[str, str]]] = None,
         },
         "chapters": chapters,
     }
+
+
+def _validate_shape(raw: Any, internal: bool = False) -> List[Dict[str, str]]:
+    """Strict boundary validation; never repair or discard input fields."""
+    issues = []
+    def error(at, message):
+        _issue(issues, "error", at, message)
+    def obj(value, at, required, optional=()):
+        if not isinstance(value, dict):
+            error(at, "必须是对象")
+            return False
+        for key in required:
+            if key not in value:
+                error(f"{at}.{key}", "缺少必需字段")
+        for key in value:
+            if key not in (*required, *optional):
+                error(f"{at}.{key}", "未知字段")
+        return True
+    def integer(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 and value <= 9007199254740991 and value == int(value)
+    def text(value, at):
+        if not isinstance(value, str):
+            error(at, "必须是字符串")
+    required = ["schema", "schemaVersion", *(["revision", "updatedAt"] if internal else []), "meta", "chapters"]
+    if not obj(raw, "$", required, [] if internal else ["exportedAt", "revision"]):
+        return issues
+    if raw.get("schema") != SCHEMA_NAME:
+        error("schema", "必须是 girls_dict")
+    if isinstance(raw.get("schemaVersion"), bool) or raw.get("schemaVersion") != EXPORT_VERSION:
+        error("schemaVersion", "必须是 2")
+    if "revision" in raw and not integer(raw["revision"]):
+        error("revision", "必须是非负整数")
+    stamp = "updatedAt" if internal else "exportedAt"
+    if stamp in raw and raw[stamp] is not None:
+        text(raw[stamp], stamp)
+    meta = raw.get("meta")
+    if obj(meta, "meta", ["title", "author", "charMin", "charMax", "charNames"]):
+        text(meta.get("title"), "meta.title")
+        text(meta.get("author"), "meta.author")
+        if isinstance(meta.get("charMin"), bool) or meta.get("charMin") != 0:
+            error("meta.charMin", "必须是 0")
+        if isinstance(meta.get("charMax"), bool) or meta.get("charMax") != 100:
+            error("meta.charMax", "必须是 100")
+        names = meta.get("charNames")
+        if not isinstance(names, dict):
+            error("meta.charNames", "必须是对象")
+        else:
+            for key, value in names.items():
+                if not isinstance(key, str) or key not in {str(n) for n in range(101)}:
+                    error(f"meta.charNames.{key}", "必须是 0..100 的规范编号键")
+                text(value, f"meta.charNames.{key}")
+    ids = set()
+    def check_id(value, at):
+        if not isinstance(value, str) or not value or value in ids:
+            error(at, "id 必须是全局唯一的非空字符串")
+        else:
+            ids.add(value)
+    chapters = raw.get("chapters")
+    if not isinstance(chapters, list):
+        error("chapters", "必须是数组")
+    else:
+        for index, chapter in enumerate(chapters):
+            at = f"chapters[{index}]"
+            if not obj(chapter, at, ["no", "title", "note", "panels"], ["id"] if internal else []):
+                continue
+            if internal and "id" in chapter:
+                check_id(chapter["id"], f"{at}.id")
+            if not integer(chapter.get("no")) or chapter.get("no") != index + 1:
+                error(f"{at}.no", "必须等于数组位置 + 1")
+            text(chapter.get("title"), f"{at}.title")
+            text(chapter.get("note"), f"{at}.note")
+            panels = chapter.get("panels")
+            if not isinstance(panels, list):
+                error(f"{at}.panels", "必须是数组")
+            else:
+                for pi, panel in enumerate(panels):
+                    pat = f"{at}.panels[{pi}]"
+                    if not obj(panel, pat, ["chars"], ["id"] if internal else []):
+                        continue
+                    if internal and "id" in panel:
+                        check_id(panel["id"], f"{pat}.id")
+                    chars = panel.get("chars")
+                    if not isinstance(chars, list):
+                        error(f"{pat}.chars", "必须是数组")
+                    elif any(not integer(char) or char > 100 or (i > 0 and chars[i-1] >= char) for i, char in enumerate(chars)):
+                        error(f"{pat}.chars", "必须是 0..100 唯一升序整数")
+    return issues
+
+
+def validate_export_document(raw: Any) -> List[Dict[str, str]]:
+    return _validate_shape(raw)
+
+
+def validate_internal_document(raw: Any) -> List[Dict[str, str]]:
+    return _validate_shape(raw, True)
+
+
+def _require_export_document(raw: Any) -> Any:
+    issues = validate_export_document(raw)
+    if issues:
+        raise ValidationError(issues)
+    return raw
+
+
+def default_document(title: str = "超超你的字典") -> Dict[str, Any]:
+    return normalize_document({"chapters": []}, [], title)
 
 
 def strip_ids(document: Dict[str, Any]) -> Dict[str, Any]:
@@ -289,27 +397,16 @@ class GirlsDB:
         backup_interval: float = DEFAULT_BACKUP_INTERVAL,
         backup_keep: int = DEFAULT_BACKUP_KEEP,
         title: str = "超超你的字典",
-        legacy_json: Any = _UNSET,
     ):
         self.path = Path(path).resolve()
         self.backup_dir = Path(backup_dir).resolve() if backup_dir else self.path.parent / "backups"
         self.backup_interval = float(backup_interval)
         self.backup_keep = int(backup_keep)
         self.title = title
-        # 旧版单文件 JSON：只在数据库文件还不存在时用来做一次性迁移。
-        # 不传 = 用同名同目录的 girls_dict.json；显式传 None = 关闭自动迁移。
-        if legacy_json is _UNSET:
-            candidate = self.path.parent / "girls_dict.json"
-            self.legacy_json = candidate if (self.path.suffix != ".json" and candidate != self.path) else None
-        elif legacy_json is None:
-            self.legacy_json = None
-        else:
-            self.legacy_json = Path(legacy_json).resolve()
         self._lock = threading.RLock()
         self._conn: Optional[sqlite3.Connection] = None
         self._shared: Any = None
         self.last_issues: List[Dict[str, str]] = []
-        self.migration: Optional[Dict[str, Any]] = None
 
     # ------------------------------------------------------------------ #
     # 连接与建表
@@ -364,68 +461,20 @@ class GirlsDB:
         return self.path.is_file() and self.path.stat().st_size > 0
 
     def initialize(self) -> Dict[str, Any]:
-        """建表；如果这是首次创建，顺便尝试从旧版 JSON 迁移。"""
+        """Initialize fresh storage only; never upgrade existing databases."""
         with self._lock:
             fresh = not self.exists()
             conn = self.connection()
-            try:
+            if not fresh:
+                has_info = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='info'").fetchone()
+                if not has_info or self._info(conn, "schema_version") != str(STORAGE_VERSION):
+                    raise ValidationError([{"level": "error", "path": "schema_version", "message": "SQLite 存储版本必须是 2"}])
+            else:
                 conn.executescript(SCHEMA_SQL)
-                if fresh or self._info(conn, "schema_version") is None:
-                    self._set_info(conn, "schema_version", str(STORAGE_VERSION))
-                    self._set_info(conn, "title", self.title)
-                    self._set_info(conn, "author", "")
-                    if self._info(conn, "revision") is None:
-                        self._set_info(conn, "revision", "0")
-                        self._set_info(conn, "updated_at", "")
-                if fresh:
-                    self.migration = self._auto_migrate(conn)
-            finally:
-                conn.close()
-            return {"fresh": fresh, "migration": self.migration}
-
-    def _auto_migrate(self, conn: sqlite3.Connection) -> Optional[Dict[str, Any]]:
-        """数据库是新建的，而旁边还躺着一份旧版 JSON —— 把它迁进来并归档。"""
-        source = self.legacy_json
-        if not source or not Path(source).is_file():
-            return None
-        try:
-            summary = self._import_into(conn, Path(source))
-        except Exception as exc:  # 迁移失败也不能毁掉原文件
-            return {"ok": False, "source": str(source), "error": str(exc)}
-        archived = self._archive_legacy(Path(source))
-        self._set_info(conn, "migrated_from", str(source))
-        self._set_info(conn, "migrated_at", now_iso())
-        summary = dict(summary, ok=True, source=str(source), archived=str(archived) if archived else None)
-        return summary
-
-    def migration_info(self) -> Optional[Dict[str, str]]:
-        """数据库里记录的「当初是从哪份 JSON 迁移来的」。"""
-        with self._lock:
-            conn = self.connection()
-            try:
-                source = self._info(conn, "migrated_from")
-                if not source:
-                    return None
-                return {"source": source, "at": self._info(conn, "migrated_at") or ""}
-            finally:
-                conn.close()
-
-    def _archive_legacy(self, source: Path) -> Optional[Path]:
-        """把已经迁移完的旧 JSON 挪到 legacy/ 存档（绝不删除）。
-
-        源文件本来就在 legacy/ 里的话（例如从归档里再迁一次），就地改名，
-        不再套一层 legacy/legacy/。
-        """
-        target_dir = source.parent if source.parent.name == "legacy" else source.parent / "legacy"
-        target_dir.mkdir(parents=True, exist_ok=True)
-        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        stem = source.stem.split("-migrated-")[0]      # 再迁一次也不要套娃
-        target = target_dir / f"{stem}-migrated-{stamp}{source.suffix}"
-        try:
-            shutil.move(str(source), str(target))
-            return target
-        except OSError:
-            return None
+                for key, value in {"schema_version": str(STORAGE_VERSION), "title": self.title,
+                                   "author": "", "revision": "0", "updated_at": ""}.items():
+                    self._set_info(conn, key, value)
+            return {"fresh": fresh}
 
     # ------------------------------------------------------------------ #
     # info 表小工具
@@ -479,6 +528,9 @@ class GirlsDB:
     def _document(self, conn: sqlite3.Connection) -> Dict[str, Any]:
         revision = int(self._info(conn, "revision") or 0)
         updated_at = self._info(conn, "updated_at") or None
+        # 只有 info 表里确实没有 title 行（None）时才回退到默认标题。
+        # 空字符串是合法的当前格式标题，不能因为真值判断被替换成默认值。
+        stored_title = self._info(conn, "title")
         names = {row["char"]: row["name"] for row in conn.execute("SELECT char, name FROM char_name")}
 
         panels: Dict[str, List[int]] = {}
@@ -508,7 +560,7 @@ class GirlsDB:
             "revision": revision,
             "updatedAt": updated_at,
             "meta": {
-                "title": self._info(conn, "title") or self.title,
+                "title": stored_title if stored_title is not None else self.title,
                 "author": self._info(conn, "author") or "",
                 "charMin": CHAR_MIN,
                 "charMax": CHAR_MAX,
@@ -875,7 +927,8 @@ class GirlsDB:
         conn.execute("UPDATE panel SET updated_at = ? WHERE id = ?", (now_iso(), panel_id))
 
     def _op_meta_update(self, conn: sqlite3.Connection, op: Dict[str, Any], _issues) -> None:
-        if isinstance(op.get("title"), str) and op["title"].strip():
+        # 只做类型判断：空字符串是合法的"清空标题"操作，不能当作没有提供而忽略。
+        if isinstance(op.get("title"), str):
             self._set_info(conn, "title", op["title"])
         if isinstance(op.get("author"), str):
             self._set_info(conn, "author", op["author"])
@@ -909,11 +962,16 @@ class GirlsDB:
 
     def _op_replace(self, conn: sqlite3.Connection, op: Dict[str, Any],
                     issues: List[Dict[str, str]]) -> None:
-        raw = op.get("db", op.get("document"))
+        if "document" in op:
+            raise OpError(0, "不支持 document 字段")
+        raw = op.get("db")
         if raw is None:
             raise OpError(0, "缺少 db 字段")
         if not isinstance(raw, dict):
             raise OpError(0, "db 必须是对象")
+        invalid = validate_internal_document(raw)
+        if invalid:
+            raise ValidationError(invalid)
         document = normalize_document(raw, issues, self.title)
         self._write_document(conn, document)
         if document["meta"].get("title"):
@@ -971,7 +1029,9 @@ class GirlsDB:
         conn.execute("DELETE FROM char_name")
         for name_key, name in (document["meta"].get("charNames") or {}).items():
             number = int(name_key)
-            if CHAR_MIN <= number <= CHAR_MAX and isinstance(name, str) and name.strip():
+            # 空字符串是合法的角色名（表示暂未命名），要按原样保留；
+            # 这里只校验编号范围与值类型，不再用 strip() 作为"是否写入"的条件。
+            if CHAR_MIN <= number <= CHAR_MAX and isinstance(name, str):
                 conn.execute("INSERT OR REPLACE INTO char_name(char, name) VALUES(?,?)", (number, name))
         stamped = now_iso()
         for index, chapter in enumerate(document["chapters"], start=1):
@@ -984,26 +1044,20 @@ class GirlsDB:
 
     # ---- 整库替换 / 导入 -------------------------------------------------- #
     def replace_all(self, raw: Any, expected_revision: Optional[int] = None,
-                    force: bool = True, strict: bool = False, label: str = "replace") -> Dict[str, Any]:
+                    force: bool = True, label: str = "replace") -> Dict[str, Any]:
         """整库替换（PUT /api/db 用）。会回传整份文档，方便调用方直接拿到新状态。"""
         return self.apply_patch([{"op": "replace", "db": raw}], expected_revision=expected_revision,
                                 force=force, label=label, include_document=True)
 
     def _import_into(self, conn: sqlite3.Connection, source: Path) -> Dict[str, Any]:
         """把一份 JSON 文件写进当前连接（调用方负责事务）。"""
-        text = source.read_text(encoding="utf-8")
-        if not text.strip():
-            document = normalize_document({"chapters": []}, [], self.title)
-        else:
-            try:
-                document = normalize_document(json.loads(text), [], self.title)
-            except json.JSONDecodeError as exc:
-                raise ValueError(f"{source.name} 不是合法 JSON：{exc}") from exc
+        parsed = json.loads(source.read_text(encoding="utf-8"))
+        document = normalize_document(_require_export_document(parsed), [], self.title)
         conn.execute("BEGIN IMMEDIATE")
         try:
             self._write_document(conn, document)
-            if document["meta"].get("title"):
-                self._set_info(conn, "title", document["meta"]["title"])
+            # 严格文档里的 meta.title 一定是字符串（可以为空）；空字符串也要原样写入。
+            self._set_info(conn, "title", document["meta"]["title"])
             self._set_info(conn, "author", document["meta"].get("author", ""))
             revision = self._bump_revision(conn, "import", source.name)
             conn.execute("COMMIT")
@@ -1019,9 +1073,9 @@ class GirlsDB:
         }
         return stats
 
-    def import_json(self, source: Union[str, os.PathLike, Dict[str, Any]], archive: bool = False,
+    def import_json(self, source: Union[str, os.PathLike, Dict[str, Any]],
                     label: str = "import") -> Dict[str, Any]:
-        """从 JSON 文件（或直接给对象）导入，可顺带把源文件归档。"""
+        """从 JSON 文件（或直接给对象）导入，源文件保持不变。"""
         with self._lock:
             conn = self.connection()
             try:
@@ -1032,12 +1086,12 @@ class GirlsDB:
                     stats = self._import_into(conn, path)
                     stats["source"] = str(path)
                 else:
-                    document = normalize_document(source, [], self.title)
+                    document = normalize_document(_require_export_document(source), [], self.title)
                     conn.execute("BEGIN IMMEDIATE")
                     try:
                         self._write_document(conn, document)
-                        if document["meta"].get("title"):
-                            self._set_info(conn, "title", document["meta"]["title"])
+                        # 空标题同样原样保存（校验器只要求字符串类型）。
+                        self._set_info(conn, "title", document["meta"]["title"])
                         self._set_info(conn, "author", document["meta"].get("author", ""))
                         revision = self._bump_revision(conn, label, "object")
                         conn.execute("COMMIT")
@@ -1050,9 +1104,6 @@ class GirlsDB:
                         "panels": sum(len(c["panels"]) for c in document["chapters"]),
                         "chars": sum(len(p["chars"]) for c in document["chapters"] for p in c["panels"]),
                     }
-                if archive and stats["source"] not in ("(object)",):
-                    archived = self._archive_legacy(Path(stats["source"]))
-                    stats["archived"] = str(archived) if archived else None
                 return stats
             finally:
                 conn.close()
@@ -1137,7 +1188,7 @@ class GirlsDB:
             raise FileNotFoundError(f"找不到快照：{name}")
         if self.exists():
             self.create_backup(tag="before-restore")
-        snapshot = GirlsDB(source, backup_dir=self.backup_dir, backup_interval=0, legacy_json=None)
+        snapshot = GirlsDB(source, backup_dir=self.backup_dir, backup_interval=0)
         try:
             document = snapshot.load_document()
         finally:
@@ -1147,7 +1198,8 @@ class GirlsDB:
             try:
                 conn.execute("BEGIN IMMEDIATE")
                 self._write_document(conn, document)
-                self._set_info(conn, "title", document["meta"].get("title") or self.title)
+                # 快照里的空标题也要保持为空，不能替换成当前实例的默认标题。
+                self._set_info(conn, "title", document["meta"]["title"])
                 self._set_info(conn, "author", document["meta"].get("author", ""))
                 revision = self._bump_revision(conn, "restore", Path(name).name)
                 conn.execute("COMMIT")

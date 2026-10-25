@@ -58,7 +58,7 @@ class TestPatchContract(unittest.TestCase):
         base = ROOT / ".tmp-tests"
         self.dir = base / uuid.uuid4().hex[:12]
         self.dir.mkdir(parents=True, exist_ok=True)
-        self.database = GirlsDB(self.dir / "contract.sqlite3", backup_interval=0, legacy_json=None)
+        self.database = GirlsDB(self.dir / "contract.sqlite3", backup_interval=0)
         self.database.initialize()
         self.addCleanup(self.database.close)
 
@@ -72,7 +72,7 @@ class TestPatchContract(unittest.TestCase):
         self.assertTrue(all("op" in op for op in ops))
 
         # 1) 把改动前的文档写进 SQLite（id 会被原样保留）
-        self.database.import_json(scenario["before"])
+        self.database.replace_all(scenario["before"])
         stored = self.database.load_document()
         self.assertEqual([c["id"] for c in stored["chapters"]],
                          [c["id"] for c in scenario["before"]["chapters"]])
@@ -104,13 +104,68 @@ class TestPatchContract(unittest.TestCase):
         self.assertTrue(used <= known, f"服务端不认识这些操作：{sorted(used - known)}")
 
     def test_export_strips_ids_after_patch(self) -> None:
-        self.database.import_json(self.scenario["before"])
+        self.database.replace_all(self.scenario["before"])
         self.database.apply_patch(self.scenario["ops"])
         exported = json.dumps(self.database.export_document(), ensure_ascii=False)
         self.assertNotIn('"id"', exported)
         self.assertNotIn("pn-", exported)
         self.assertNotIn("ch-", exported)
         self.assertEqual(self.database.integrity_check(), [])
+
+    def test_strict_document_validators_match_node(self) -> None:
+        import copy
+        from girls_db import strip_ids, validate_export_document, validate_internal_document
+        good = strip_ids(self.scenario["before"])
+        documents = [good, None, [], {}, {"schemaVersion": 1}]
+        for key in good:
+            bad = copy.deepcopy(good); del bad[key]
+            documents.append(bad)
+        changes = [
+            (["schema"], "other"), (["schemaVersion"], 1), (["schemaVersion"], True),
+            (["exportedAt"], 1), (["revision"], -1), (["revision"], True),
+            (["revision"], 1.5), (["revision"], 9007199254740992),
+            (["meta", "charMin"], False), (["meta", "charMax"], True),
+            (["meta", "title"], None), (["meta", "charNames"], {"01": "bad"}),
+            (["meta", "charNames"], {"101": "bad"}), (["meta", "charNames"], {"1": 3}),
+            (["chapters", 0, "no"], True), (["chapters", 0, "no"], 2),
+            (["chapters", 0, "id"], "old"), (["chapters", 0, "panels", 0, "id"], "old"),
+            (["chapters", 0, "panels", 0, "chars"], [1, 1]),
+            (["chapters", 0, "panels", 0, "chars"], [2, 1]),
+            (["chapters", 0, "panels", 0, "chars"], [False]),
+            (["chapters", 0, "panels", 0, "chars"], ["1"]),
+            (["chapters", 0, "panels", 0, "chars"], [-1, 101]),
+        ]
+        for keys, value in changes:
+            bad = copy.deepcopy(good); target = bad
+            for key in keys[:-1]:
+                target = target[key]
+            target[keys[-1]] = value
+            documents.append(bad)
+        for keys in [[], ["meta"], ["chapters", 0], ["chapters", 0, "panels", 0]]:
+            bad = copy.deepcopy(good); target = bad
+            for key in keys:
+                target = target[key]
+            target["unknown"] = True
+            documents.append(bad)
+        internal = copy.deepcopy(self.scenario["before"])
+        no_ids = copy.deepcopy(internal)
+        for chapter in no_ids["chapters"]:
+            chapter.pop("id", None)
+            for panel in chapter["panels"]:
+                panel.pop("id", None)
+        duplicate = copy.deepcopy(internal)
+        duplicate["chapters"][0]["panels"][0]["id"] = duplicate["chapters"][0]["id"]
+        internals = [internal, no_ids, duplicate, good]
+        script = "const fs=require('fs'),d=require('./server/db.js'),x=JSON.parse(fs.readFileSync(0,'utf8'));process.stdout.write(JSON.stringify([x[0].map(d.validateExportDocument),x[1].map(d.validateInternalDocument)]));"
+        result = subprocess.run([self.node, "-e", script], cwd=ROOT,
+                                input=json.dumps([documents, internals]), capture_output=True,
+                                encoding="utf-8", check=True)
+        node_external, node_internal = json.loads(result.stdout)
+        for raw, actual in zip(documents, node_external):
+            self.assertCountEqual(validate_export_document(raw), actual, repr(raw))
+        for raw, actual in zip(internals, node_internal):
+            self.assertCountEqual(validate_internal_document(raw), actual, repr(raw))
+        self.assertEqual(validate_internal_document(no_ids), [])
 
 
 if __name__ == "__main__":

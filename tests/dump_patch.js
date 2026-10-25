@@ -24,7 +24,9 @@ vm.runInContext(fs.readFileSync(path.join(ROOT, 'public', 'js', 'model.js'), 'ut
 const model = sandbox.window.GD.model;
 
 const sample = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'sample.girls_dict.json'), 'utf8'));
-const before = model.normalizeDb(sample).db;
+// Normalize an explicit current fixture; no legacy import is exercised here.
+const current = require('../server/db.js').normalizeDocument(sample);
+const before = model.normalizeDb(current).db;
 const baseline = model.fingerprints(before);
 
 /* --- 一串有代表性的改动：改编号、改标题、加话、删槽位、换顺序、改角色名 ------ */

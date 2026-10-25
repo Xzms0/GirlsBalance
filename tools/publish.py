@@ -37,7 +37,7 @@ def main(argv=None) -> int:
         print(f"找不到数据库：{data_file}", file=sys.stderr)
         return 2
 
-    database = GirlsDB(data_file, backup_interval=0, legacy_json=None)
+    database = GirlsDB(data_file, backup_interval=0)
     database.initialize()
     result = publish_site(
         database,

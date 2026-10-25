@@ -81,21 +81,13 @@
   function importJsonText(text) {
     var parsed;
     try {
-      parsed = JSON.parse(text);
+      parsed = model.parseExport(text);
     } catch (error) {
-      ui.toast('不是合法 JSON：' + error.message, 'error');
+      ui.toast('导入文件无效：' + error.message, 'error');
       return;
     }
-    var issues = model.validateDb(parsed);
-    var errors = issues.filter(function (item) { return item.level === 'error'; });
     var body = '<p>将用文件内容整库替换当前数据（当前 ' + store.state.db.chapters.length +
-      ' 话 → 文件 ' + (((parsed || {}).chapters || []).length) + ' 话）。</p>';
-    if (errors.length) {
-      body += '<p class="warn-text">检测到 ' + errors.length + ' 处问题，导入时会自动修正：</p><ul class="issues">' +
-        errors.slice(0, 8).map(function (item) {
-          return '<li>' + ui.esc(item.path) + '：' + ui.esc(item.message) + '</li>';
-        }).join('') + '</ul>';
-    }
+      ' 话 → 文件 ' + parsed.chapters.length + ' 话）。</p>';
     ui.confirm('确认导入？', body, '导入并替换', 'primary').then(function (ok) {
       if (!ok) return;
       store.actions.replaceWholeDb(parsed, '导入 JSON');

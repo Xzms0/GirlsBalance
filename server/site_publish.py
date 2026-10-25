@@ -23,10 +23,11 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from girls_db import CHAR_MAX, CHAR_MIN, EXPORT_VERSION, SCHEMA_NAME, GirlsDB, strip_ids
+from girls_db import (CHAR_MAX, CHAR_MIN, EXPORT_VERSION, SCHEMA_NAME, GirlsDB,
+                      ValidationError, strip_ids, validate_export_document)
 from json_pretty import dumps as pretty_json
 
-SITE_FORMAT_VERSION = 2
+SITE_FORMAT_VERSION = 3
 
 SITE_DIR = Path("docs")
 DATA_DIR = SITE_DIR / "data"
@@ -50,8 +51,11 @@ def _json(value: Any) -> str:
 
 
 def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
-    """根据导出文档生成全部公开 JSON 文本。"""
-    meta = document.get("meta") or {}
+    """根据当前完整 JSON 文档生成全部公开分片。"""
+    issues = validate_export_document(document)
+    if issues:
+        raise ValidationError(issues)
+    meta = document["meta"]
     names = {str(key): str(value) for key, value in (meta.get("charNames") or {}).items()}
     exported_at = str(document.get("exportedAt") or "")
     chapters = list(document.get("chapters") or [])
@@ -126,6 +130,7 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
         chapter_files[f"chapters/{filename}"] = _json({
             "schema": SCHEMA_NAME,
             "schemaVersion": EXPORT_VERSION,
+            "formatVersion": SITE_FORMAT_VERSION,
             "no": no,
             "title": str(chapter.get("title") or ""),
             "note": str(chapter.get("note") or ""),
@@ -143,7 +148,6 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
             "char": char,
             "name": names.get(str(char), ""),
             "count": count,
-            "panels": count,
             "points": round(total["points"], 1) if total else 0.0,
             "weighted": round(total["weighted"], 1) if total else 0.0,
             "firstChapter": first_chapter.get(char),
@@ -168,7 +172,6 @@ def build_payload(document: Dict[str, Any], revision: int) -> Dict[str, str]:
         "maxCount": max_count,
         "maxPoints": max_points,
         "maxWeighted": max_weighted,
-        "maxPanels": max_count,
         "characters": characters,
     }
     chapter_index = {
@@ -398,7 +401,9 @@ def _publish(database: GirlsDB, root: Path, message: str,
 
     revision = int(database.revision())
     manifest = read_manifest(root)
-    if (manifest and int(manifest.get("revision") or -1) == revision and files_exist(root)
+    if (manifest and manifest.get("schemaVersion") == EXPORT_VERSION
+            and manifest.get("formatVersion") == SITE_FORMAT_VERSION
+            and manifest.get("revision") == revision and files_exist(root)
             and not (info and info.get("dirty")) and not force):
         if export_only:
             return {"ok": True, "changed": False, "revision": revision,

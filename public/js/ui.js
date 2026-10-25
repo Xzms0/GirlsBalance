@@ -492,7 +492,7 @@
     return [
       '<section class="card">',
       '<h3>导出 / 导入</h3>',
-      '<p class="muted small">导出的 JSON 包含话、标题、备注和每个槽位的角色编号；导入会整库替换当前数据。</p>',
+      '<p class="muted small">仅支持 schemaVersion=2 的无内部 id JSON；导入会严格校验并整库替换当前数据。</p>',
       '<div class="row">',
       '<button class="btn" data-act="export-json" data-nofocus="1">导出 JSON</button>',
       '<button class="btn" data-act="export-csv" data-nofocus="1">导出 CSV</button>',

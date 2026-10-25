@@ -1,65 +1,45 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://example.local/girls_dict.schema.json",
-  "title": "girls_dict 交换格式（导入 / 导出用的 JSON）",
-  "description": "超超你的字典（girls_dict）的 JSON 交换格式。注意：数据库本体自 v2 起是 SQLite（见 schema/girls_dict.sql），JSON 只用于导入、导出与与其它程序交换。导出的 JSON 不含任何内部 id。",
+  "title": "girls_dict 完整 JSON 格式 v2",
+  "description": "用于导入、导出及 JSON 文件模式。必须使用当前版本，不含内部 id；未知字段会被拒绝。SQLite 存储版本独立于本 JSON 版本。",
   "type": "object",
   "required": ["schema", "schemaVersion", "meta", "chapters"],
-  "additionalProperties": true,
+  "additionalProperties": false,
   "properties": {
-    "schema": {
-      "type": "string",
-      "const": "girls_dict",
-      "description": "固定标识，用于识别文件类型。"
-    },
-    "schemaVersion": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "交换格式版本号，当前为 1。"
-    },
-    "exportedAt": {
-      "type": ["string", "null"],
-      "description": "导出时间，ISO-8601 字符串。导入时忽略。"
-    },
-    "revision": {
-      "type": "integer",
-      "minimum": 0,
-      "description": "可选。仅 JSON 文件模式会写这个字段；导入到 SQLite 时忽略（版本号由数据库自己维护）。"
-    },
+    "schema": { "const": "girls_dict" },
+    "schemaVersion": { "const": 2 },
+    "exportedAt": { "type": ["string", "null"], "description": "可选导出时间；导入 SQLite 时不恢复此时间。" },
+    "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991, "description": "JSON 文件模式的版本号；导入 SQLite 时由目标库维护版本号。" },
     "meta": {
       "type": "object",
-      "description": "元信息。",
+      "required": ["title", "author", "charMin", "charMax", "charNames"],
+      "additionalProperties": false,
       "properties": {
-        "title": { "type": "string", "description": "作品/字典名称。" },
-        "author": { "type": "string", "description": "录入者。" },
-        "charMin": { "type": "integer", "description": "角色编号下限，固定为 0。" },
-        "charMax": { "type": "integer", "description": "角色编号上限，固定为 100。" },
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "charMin": { "const": 0 },
+        "charMax": { "const": 100 },
         "charNames": {
           "type": "object",
-          "description": "角色编号 -> 角色名（可选，仅用于显示与检索）。键是字符串形式的编号。",
+          "propertyNames": { "pattern": "^(0|[1-9][0-9]?|100)$" },
           "additionalProperties": { "type": "string" }
         }
-      },
-      "additionalProperties": true
+      }
     },
     "chapters": {
       "type": "array",
-      "description": "所有“话”。数组顺序就是话的顺序，导入时会按位置重新编号为 1..N。",
+      "description": "数组顺序就是话顺序。运行时另行校验 no 必须等于数组下标 + 1。",
       "items": {
         "type": "object",
-        "required": ["panels"],
+        "required": ["no", "title", "note", "panels"],
         "additionalProperties": false,
         "properties": {
-          "no": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "话编号，可选；导入时以数组下标 + 1 为准。"
-          },
-          "title": { "type": "string", "description": "话标题，可为空。" },
-          "note": { "type": "string", "description": "备注，可为空。" },
+          "no": { "type": "integer", "minimum": 1 },
+          "title": { "type": "string" },
+          "note": { "type": "string" },
           "panels": {
             "type": "array",
-            "description": "分镜（槽位）列表。槽位顺序不重要，导入时按数组顺序记录。",
             "items": {
               "type": "object",
               "required": ["chars"],
@@ -67,12 +47,9 @@
               "properties": {
                 "chars": {
                   "type": "array",
-                  "description": "该分镜出场的角色编号，取值 [0,100] 的整数；同一槽位内会去重并升序排列，数量不限。",
-                  "items": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 100
-                  }
+                  "description": "唯一且升序的角色编号；升序由运行时校验。",
+                  "uniqueItems": true,
+                  "items": { "type": "integer", "minimum": 0, "maximum": 100 }
                 }
               }
             }
@@ -83,27 +60,9 @@
   },
   "examples": [
     {
-      "schema": "girls_dict",
-      "schemaVersion": 1,
-      "exportedAt": "2026-02-14T10:20:30Z",
-      "meta": {
-        "title": "超超你的字典",
-        "author": "",
-        "charMin": 0,
-        "charMax": 100,
-        "charNames": { "1": "超超", "5": "阿蓝" }
-      },
-      "chapters": [
-        {
-          "no": 1,
-          "title": "相遇",
-          "note": "",
-          "panels": [
-            { "chars": [1, 5] },
-            { "chars": [1, 2, 5] }
-          ]
-        }
-      ]
+      "schema": "girls_dict", "schemaVersion": 2,
+      "meta": { "title": "超超你的字典", "author": "", "charMin": 0, "charMax": 100, "charNames": { "1": "超超", "5": "阿蓝" } },
+      "chapters": [{ "no": 1, "title": "相遇", "note": "", "panels": [{ "chars": [1, 5] }] }]
     }
   ]
 }

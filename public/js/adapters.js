@@ -86,7 +86,7 @@
         return response.text().then(function (text) {
           var data = null;
           try { data = text ? JSON.parse(text) : null; } catch (error) { data = { raw: text }; }
-          return { status: response.status, data: data };
+          return { status: response.status, data: data, text: text };
         });
       }).catch(function (error) {
         if (timer) clearTimeout(timer);
@@ -206,8 +206,9 @@
         return Promise.resolve();
       },
       raw: function () {
-        return request('/api/db/raw', { method: 'GET' }).then(function (result) {
-          return typeof result.data === 'string' ? result.data : (result.data && result.data.raw) || '';
+        return request('/api/db/export?format=json', { method: 'GET' }).then(function (result) {
+          if (result.status !== 200) throw new Error((result.data && result.data.error) || '读取导出失败');
+          return result.text;
         });
       },
       pick: function () { return Promise.resolve({ ok: true, detail: base }); },
@@ -275,6 +276,9 @@
     var meta = { title: '超超你的字典', author: '', charMin: model.CHAR_MIN, charMax: model.CHAR_MAX, charNames: {} };
     var extra = {};
     raw.meta.forEach(function (row) { extra[row.key] = row.value; });
+    if ((raw.meta.length || raw.chapters.length) && extra.schema_version !== model.SCHEMA_VERSION) {
+      throw new Error('IndexedDB 数据必须使用 schemaVersion=2');
+    }
     if (typeof extra.title === 'string') meta.title = extra.title;
     if (typeof extra.author === 'string') meta.author = extra.author;
     if (extra.charNames && typeof extra.charNames === 'object') meta.charNames = extra.charNames;
@@ -341,7 +345,6 @@
           case 'panel.delete':
           case 'panel.chars':
             if (op.chapterId) put[op.chapterId] = true;
-            else if (op.chapter_id) put[op.chapter_id] = true;
             else {
               // 补丁里没带 chapterId：去当前文档里反查它属于哪一话
               var found = false;
@@ -531,7 +534,6 @@
     }
 
     function loadText(text) {
-      if (!text || !text.trim()) return { db: model.defaultDb(), revision: 0, empty: true };
       var parsed = model.parseExport(text);
       return { db: parsed, revision: Number(parsed.revision || 0) };
     }
@@ -568,6 +570,12 @@
           });
         return picker.then(function (result) {
           handle = mode === 'save' ? result : result[0];
+          if (mode === 'save') {
+            return handle.createWritable().then(function (writable) {
+              return writable.write(model.prettyJson(model.toExportDocument(model.defaultDb())))
+                .then(function () { return writable.close(); });
+            }).then(function () { return { ok: true, detail: handle.name }; });
+          }
           return { ok: true, detail: handle.name };
         });
       },

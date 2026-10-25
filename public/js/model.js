@@ -11,7 +11,7 @@
   var CHAR_MIN = 0;
   var CHAR_MAX = 100;
   var SCHEMA_NAME = 'girls_dict';
-  var SCHEMA_VERSION = 1;
+  var SCHEMA_VERSION = 2;
 
   function newId(prefix) {
     var bytes = new Uint8Array(4);
@@ -106,6 +106,9 @@
       issue(issues, 'error', '$', '顶层不是 JSON 对象，已重置为空库');
       return { db: defaultDb(title), issues: issues };
     }
+    if (input.schema !== SCHEMA_NAME || input.schemaVersion !== SCHEMA_VERSION) {
+      throw new Error('数据库必须使用 schema="girls_dict"、schemaVersion=2');
+    }
     var out = defaultDb(title);
     var metaIn = input.meta;
     if (metaIn && typeof metaIn === 'object' && Object.prototype.toString.call(metaIn) !== '[object Array]') {
@@ -129,12 +132,6 @@
       }
     } else if (metaIn !== undefined) {
       issue(issues, 'warn', 'meta', 'meta 不是对象，已重置');
-    }
-    if (input.schema !== undefined && input.schema !== null && input.schema !== SCHEMA_NAME) {
-      issue(issues, 'warn', 'schema', 'schema 字段为 ' + JSON.stringify(input.schema) + '，已改写为 ' + SCHEMA_NAME);
-    }
-    if (isFinite(input.schemaVersion) && input.schemaVersion > SCHEMA_VERSION) {
-      issue(issues, 'warn', 'schemaVersion', '文件版本 ' + input.schemaVersion + ' 高于本程序支持的 ' + SCHEMA_VERSION);
     }
     out.revision = (isFinite(input.revision) && input.revision >= 0) ? Math.floor(input.revision) : 0;
     out.updatedAt = typeof input.updatedAt === 'string' ? input.updatedAt : null;
@@ -521,8 +518,59 @@
     };
   }
 
+  /** 外部交换文档严格校验：不修复、不接受内部实体字段。 */
+  function validateExportDocument(payload) {
+    function fail(path, message) { throw new Error(path + '：' + message); }
+    function object(value, path, required, optional) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, '必须是对象');
+      required.forEach(function (key) {
+        if (!Object.prototype.hasOwnProperty.call(value, key)) fail(path + '.' + key, '缺少必需字段');
+      });
+      Object.keys(value).forEach(function (key) {
+        if (required.indexOf(key) === -1 && (optional || []).indexOf(key) === -1) fail(path + '.' + key, '未知字段');
+      });
+    }
+    function string(value, path) { if (typeof value !== 'string') fail(path, '必须是字符串'); }
+    function integer(value) { return typeof value === 'number' && isFinite(value) && Math.floor(value) === value && Math.abs(value) <= 9007199254740991; }
+    object(payload, '$', ['schema', 'schemaVersion', 'meta', 'chapters'], ['exportedAt', 'revision']);
+    if (payload.schema !== SCHEMA_NAME) fail('schema', '必须是 girls_dict');
+    if (payload.schemaVersion !== SCHEMA_VERSION) fail('schemaVersion', '必须是 2');
+    if (payload.exportedAt !== undefined && payload.exportedAt !== null) string(payload.exportedAt, 'exportedAt');
+    if (payload.revision !== undefined && (!integer(payload.revision) || payload.revision < 0)) fail('revision', '必须是非负整数');
+    object(payload.meta, 'meta', ['title', 'author', 'charMin', 'charMax', 'charNames']);
+    string(payload.meta.title, 'meta.title');
+    string(payload.meta.author, 'meta.author');
+    if (payload.meta.charMin !== CHAR_MIN || payload.meta.charMax !== CHAR_MAX) fail('meta', '编号范围必须是 0..100');
+    var names = payload.meta.charNames;
+    if (!names || typeof names !== 'object' || Array.isArray(names)) fail('meta.charNames', '必须是对象');
+    Object.keys(names).forEach(function (key) {
+      if (!/^(0|[1-9]\d?|100)$/.test(key)) fail('meta.charNames.' + key, '编号键必须是规范的 0..100');
+      string(names[key], 'meta.charNames.' + key);
+    });
+    if (!Array.isArray(payload.chapters)) fail('chapters', '必须是数组');
+    payload.chapters.forEach(function (chapter, ci) {
+      var where = 'chapters[' + ci + ']';
+      object(chapter, where, ['no', 'title', 'note', 'panels']);
+      if (chapter.no !== ci + 1) fail(where + '.no', '必须等于数组位置 + 1');
+      string(chapter.title, where + '.title');
+      string(chapter.note, where + '.note');
+      if (!Array.isArray(chapter.panels)) fail(where + '.panels', '必须是数组');
+      chapter.panels.forEach(function (panel, pi) {
+        var pwhere = where + '.panels[' + pi + ']';
+        object(panel, pwhere, ['chars']);
+        if (!Array.isArray(panel.chars)) fail(pwhere + '.chars', '必须是数组');
+        panel.chars.forEach(function (char, index) {
+          if (!integer(char) || char < CHAR_MIN || char > CHAR_MAX || (index > 0 && char <= panel.chars[index - 1])) {
+            fail(pwhere + '.chars', '编号必须是 0..100 的唯一升序整数');
+          }
+        });
+      });
+    });
+    return payload;
+  }
+
   function parseExport(text) {
-    var payload = JSON.parse(text);
+    var payload = validateExportDocument(JSON.parse(text));
     return normalizeDb(payload).db;
   }
 
@@ -557,6 +605,7 @@
     fingerprints: fingerprints,
     buildPatch: buildPatch,
     toExportDocument: toExportDocument,
+    validateExportDocument: validateExportDocument,
     parseExport: parseExport,
   };
 }(window));

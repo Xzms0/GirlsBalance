@@ -2,7 +2,7 @@
  * 超超你的小站 · 公开统计页
  *
  * 只读 docs/data 下的分片 JSON 和 docs/colors.json；不连接任何后端。
- * 数据格式固定为 formatVersion=2（不再兼容旧版）。
+ * 数据格式固定为 formatVersion=3、schemaVersion=2。
  *
  * 统计口径：
  *   count    分镜计数
@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  var DATA_FORMAT = 2;
+  var DATA_FORMAT = 3;
   var FALLBACK_COLORS = ['#5eead4', '#fbbf24', '#fb7185', '#60a5fa', '#a78bfa', '#34d399', '#f97316', '#e879f9'];
 
   var state = {
@@ -68,7 +68,7 @@
 
   function colorFor(char) {
     var table = (state.colors && state.colors.colors) || {};
-    var value = Array.isArray(table) ? table[char] : table[String(char)];
+    var value = table[String(char)];
     if (validColor(value)) return value;
     var fallback = state.colors && state.colors.fallback;
     if (validColor(fallback)) return fallback;
@@ -116,6 +116,9 @@
     if (!quiet && els['meta-chars']) els['meta-chars'].textContent = '正在读取…';
     return fetchJson('data/manifest.json?t=' + Date.now())
       .then(function (manifest) {
+        if (!manifest || manifest.schema !== 'girls_dict' || manifest.schemaVersion !== 2 || manifest.formatVersion !== DATA_FORMAT) {
+          throw new Error('公开数据需要 girls_dict、schemaVersion=2、formatVersion=3');
+        }
         state.manifest = manifest;
         // formatVersion 参与缓存 key：同 revision、不同格式时不会命中旧缓存
         var version = DATA_FORMAT + '-' + encodeURIComponent(
@@ -128,11 +131,38 @@
         return Promise.all([statsPromise, indexPromise, colorsPromise]).then(function (results) {
           var stats = results[0];
           var index = results[1];
-          if (Number(stats.formatVersion) !== DATA_FORMAT) {
+          if (!stats || stats.formatVersion !== DATA_FORMAT) {
             throw new Error('公开数据格式不匹配（需要 formatVersion=' + DATA_FORMAT + '），请重启本机服务后重新发布。');
           }
-          if (!index || Number(index.formatVersion) !== DATA_FORMAT) {
+          if (!index || index.formatVersion !== DATA_FORMAT) {
             throw new Error('章节数据格式不匹配，请重启本机服务后重新发布。');
+          }
+          if (stats.schema !== 'girls_dict' || index.schema !== 'girls_dict' || stats.schemaVersion !== 2 || index.schemaVersion !== 2) {
+            throw new Error('分片需要 girls_dict、schemaVersion=2');
+          }
+          if (!Array.isArray(stats.characters) || !Array.isArray(index.chapters) ||
+              Object.prototype.hasOwnProperty.call(stats, 'maxPanels') || Object.prototype.hasOwnProperty.call(stats, 'panels')) throw new Error('统计字段不合法');
+          stats.characters.forEach(function (item) {
+            if (!item || Object.prototype.hasOwnProperty.call(item, 'panels') || Object.prototype.hasOwnProperty.call(item, 'maxPanels') ||
+                typeof item.count !== 'number' || typeof item.points !== 'number' || typeof item.weighted !== 'number') {
+              throw new Error('角色统计必须使用 count/points/weighted');
+            }
+          });
+          index.chapters.forEach(function (chapter) {
+            if (Object.prototype.hasOwnProperty.call(chapter, 'panels') || Object.prototype.hasOwnProperty.call(chapter, 'maxPanels')) throw new Error('章节统计字段不合法');
+            if (!chapter.metrics || typeof chapter.metrics !== 'object' || Array.isArray(chapter.metrics)) throw new Error('章节缺少 metrics');
+            Object.keys(chapter.metrics).forEach(function (key) {
+              var metric = chapter.metrics[key];
+              if (!metric || Object.prototype.hasOwnProperty.call(metric, 'panels') || Object.prototype.hasOwnProperty.call(metric, 'maxPanels') ||
+                  typeof metric.count !== 'number' || typeof metric.points !== 'number' || typeof metric.weighted !== 'number') {
+                throw new Error('章节统计必须使用 count/points/weighted');
+              }
+            });
+          });
+          var colors = results[2];
+          if (colors !== null && (!colors || typeof colors !== 'object' || Array.isArray(colors) ||
+              !colors.colors || typeof colors.colors !== 'object' || Array.isArray(colors.colors))) {
+            throw new Error('颜色配置必须使用 colors 对象映射');
           }
           state.stats = stats;
           state.index = index;

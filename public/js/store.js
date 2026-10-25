@@ -11,7 +11,7 @@
   var adapters = global.GD.adapters;
 
   var HISTORY_LIMIT = 80;
-  var AUTOSAVE_DELAY = 600;
+  var AUTOSAVE_DELAY = 1500;
 
   var state = {
     db: model.defaultDb(),

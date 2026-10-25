@@ -158,7 +158,7 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   assert.strictEqual(firstChar(elements.chart.innerHTML), byCount.char, '按数据降序时最高角色排在前面');
   elements.sort.value = 'char';
   elements.sort.fire('change');
-  assert.strictEqual(firstChar(elements.chart.innerHTML), maxChar, '按角色编号降序');
+  assert.strictEqual(firstChar(elements.chart.innerHTML), minChar, '角色编号排序固定升序，不受数据排序方向影响');
   elements.sort.value = 'char';
   elements.order.value = 'asc';
   elements.sort.fire('change');
@@ -190,6 +190,36 @@ const widths = (html) => Array.from(html.matchAll(/width:([\d.]+)%/g)).map((matc
   assert.ok(/\.track\s*\{[^}]*display:\s*block/s.test(siteCss), '轨道需要 display:block');
   assert.ok(/\.bar\s*\{[^}]*display:\s*block/s.test(siteCss), '条形需要 display:block 才能应用宽高');
   assert.ok(elements.chart.innerHTML.includes('class="bar" style="width:'), '条形应有显式宽度');
+
+  /* 每次重启脚本，用独立响应验证格式边界。 */
+  async function rejectsData(label, overrides) {
+    sandbox.fetch = (url) => {
+      const clean = String(url).split('?')[0];
+      const key = clean.endsWith('manifest.json') ? 'manifest'
+        : clean.endsWith('stats.json') ? 'stats'
+          : clean.endsWith('chapters/index.json') ? 'index' : 'colors';
+      const data = Object.prototype.hasOwnProperty.call(overrides, key)
+        ? overrides[key] : { manifest, stats, index, colors }[key];
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) });
+    };
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'docs', 'js', 'chart.js'), 'utf8'), sandbox);
+    await wait(10);
+    assert.ok(elements.empty.textContent.includes('读取数据失败'), label);
+    assert.ok(elements.chart.classList.contains('hidden'), label + ' 应隐藏图表');
+  }
+  await rejectsData('拒绝manifest旧格式', { manifest: { ...manifest, formatVersion: 2 } });
+  await rejectsData('拒绝manifest错误schema', { manifest: { ...manifest, schema: 'other' } });
+  await rejectsData('拒绝stats错误schema', { stats: { ...stats, schema: 'other' } });
+  await rejectsData('拒绝index错误schema', { index: { ...index, schema: 'other' } });
+  await rejectsData('拒绝旧分片格式', { stats: { ...stats, formatVersion: 2 } });
+  await rejectsData('拒绝缺失schema版本', { manifest: { ...manifest, schemaVersion: undefined } });
+  await rejectsData('拒绝旧schema版本', { index: { ...index, schemaVersion: 1 } });
+  await rejectsData('拒绝maxPanels别名', { stats: { ...stats, maxPanels: 1 } });
+  await rejectsData('拒绝角色panels别名', { stats: {
+    ...stats, characters: [{ ...stats.characters[0], panels: 1 }],
+  } });
+  await rejectsData('拒绝颜色数组映射', { colors: { colors: ['#fff'] } });
+  await rejectsData('拒绝顶层颜色数组', { colors: ['#fff'] });
 
   console.log('公开统计页冒烟测试通过');
 })().catch((error) => {

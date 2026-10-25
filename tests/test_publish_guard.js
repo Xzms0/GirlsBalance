@@ -63,7 +63,13 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   assert.strictEqual(old.button.textContent, '服务旧');
   assert.ok(old.button.title.includes('start.bat'));
 
-  const current = boot({ ok: true, siteFormatVersion: 2 });
+  for (const version of [1, 2, 4, '3', null]) {
+    const rejected = boot({ ok: true, siteFormatVersion: version });
+    await wait(10);
+    assert.strictEqual(rejected.button.disabled, true, '非当前版本必须禁止发布：' + version);
+  }
+
+  const current = boot({ ok: true, siteFormatVersion: 3 });
   await wait(30);
   assert.strictEqual(current.button.disabled, false, '新服务应允许发布');
   assert.strictEqual(current.button.textContent, '发布');

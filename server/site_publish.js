@@ -21,7 +21,7 @@ const DATA_DIR = path.join(SITE_DIR, 'data');
 const CHAPTER_DIR = path.join(DATA_DIR, 'chapters');
 const GIT_TIMEOUT = 90000;
 const MAX_OUTPUT = 4000;
-const SITE_FORMAT_VERSION = 2;
+const SITE_FORMAT_VERSION = 3;
 const DEFAULT_MESSAGE = 'data: rev {revision}（{chapters} 话 / {panels} 分镜）';
 
 let busy = false;
@@ -43,7 +43,9 @@ function short(text) {
 }
 
 function buildPayload(document, revision) {
-  const meta = document.meta || {};
+  const issues = db.validateExportDocument(document);
+  if (issues.length) throw new db.ValidationError(issues);
+  const meta = document.meta;
   const names = {};
   Object.keys(meta.charNames || {}).forEach((key) => { names[String(key)] = String(meta.charNames[key]); });
   const exportedAt = String(document.exportedAt || '');
@@ -122,6 +124,7 @@ function buildPayload(document, revision) {
     chapterFiles[`chapters/${filename}`] = json({
       schema: db.SCHEMA_NAME,
       schemaVersion: db.EXPORT_VERSION,
+      formatVersion: SITE_FORMAT_VERSION,
       no,
       title: String(chapter.title || ''),
       note: String(chapter.note || ''),
@@ -140,7 +143,6 @@ function buildPayload(document, revision) {
       char,
       name: names[String(char)] || '',
       count,
-      panels: count,
       points: total ? Number(total.points.toFixed(1)) : 0,
       weighted: total ? Number(total.weighted.toFixed(1)) : 0,
       firstChapter: firstChapter[char] === undefined ? null : firstChapter[char],
@@ -166,7 +168,6 @@ function buildPayload(document, revision) {
     maxCount,
     maxPoints,
     maxWeighted,
-    maxPanels: maxCount,
     characters,
   };
   const chapterIndex = {
@@ -382,7 +383,8 @@ function publishNow(database, root, message, exportOnly, doPush, force) {
       counts: existingCounts,
     };
   }
-  if (existing && Number(existing.revision) === revision && filesExist(root) && !(info && info.dirty) && !force) {
+  if (existing && existing.schemaVersion === db.EXPORT_VERSION && existing.formatVersion === SITE_FORMAT_VERSION
+      && existing.revision === revision && filesExist(root) && !(info && info.dirty) && !force) {
     if (exportOnly) {
       return { ok: true, changed: false, revision, exportedAt: existing.exportedAt, counts: existing.counts || {} };
     }

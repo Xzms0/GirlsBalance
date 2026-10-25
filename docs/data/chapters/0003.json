@@ -1,6 +1,6 @@
 {
   "schema": "girls_dict",
-  "schemaVersion": 1,
+  "schemaVersion": 2, "formatVersion": 3,
   "no": 3,
   "title": "好本同学",
   "note": "",

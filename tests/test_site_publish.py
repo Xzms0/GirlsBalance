@@ -13,8 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "server"))
 
-from girls_db import normalize_document, strip_ids  # noqa: E402
-from site_publish import build_payload, write_payload  # noqa: E402
+from girls_db import ValidationError, normalize_document, strip_ids  # noqa: E402
+from site_publish import build_payload, publish_site, write_payload  # noqa: E402
 
 SAMPLE = ROOT / "data" / "sample.girls_dict.json"
 
@@ -41,7 +41,14 @@ class SitePublishTest(unittest.TestCase):
         self.assertEqual(self.stats["maxCount"], 6)
         self.assertEqual(self.stats["maxPoints"], 1.9)
         self.assertEqual(self.stats["maxWeighted"], 1.1)
-        self.assertEqual(self.stats["maxPanels"], 6)
+        self.assertNotIn("maxPanels", self.stats)
+        for item in self.stats["characters"]:
+            self.assertNotIn("panels", item)
+        for payload in self.payload.values():
+            data = json.loads(payload)
+            self.assertEqual(data["schema"], "girls_dict")
+            self.assertEqual(data["schemaVersion"], 2)
+            self.assertEqual(data["formatVersion"], 3)
         self.assertEqual(len(self.stats["characters"]), 101)
         self.assertEqual(self.stats["characters"][0]["char"], 0)
         self.assertEqual(self.stats["characters"][0]["count"], 0)
@@ -111,6 +118,40 @@ class SitePublishTest(unittest.TestCase):
         self.assertIn('"chars": [1, 2, 5]', chapter)
         self.assertNotIn('"chars": [\n', chapter)
         self.assertLess(len(chapter.splitlines()), 20)
+
+    def test_build_rejects_noncurrent_export(self) -> None:
+        for mutate in (
+            lambda data: data.update(schemaVersion=1),
+            lambda data: data.pop("schemaVersion"),
+            lambda data: data["chapters"][0].update(id="ch-old"),
+            lambda data: data["chapters"][0]["panels"][0].update(id="pn-old"),
+        ):
+            data = json.loads(json.dumps(self.document))
+            mutate(data)
+            with self.assertRaises(ValidationError):
+                build_payload(data, revision=7)
+
+    def test_same_revision_wrong_format_does_not_skip_export(self) -> None:
+        work = ROOT / ".tmp-test-run" / uuid.uuid4().hex
+        work.mkdir(parents=True)
+        class Database:
+            def revision(inner):
+                return 7
+            def load_document(inner):
+                return normalize_document(self.document)
+        try:
+            old_payload = dict(self.payload)
+            manifest = json.loads(old_payload["manifest.json"])
+            manifest["formatVersion"] = 2
+            old_payload["manifest.json"] = json.dumps(manifest)
+            write_payload(work, old_payload)
+            result = publish_site(Database(), work, export_only=True)
+            self.assertTrue(result["ok"], result)
+            self.assertTrue(result["changed"])
+            current = json.loads((work / "docs/data/manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(current["formatVersion"], 3)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
 
     def test_write_payload_cleans_stale_chapters(self) -> None:
         work = ROOT / ".tmp-test-run" / uuid.uuid4().hex

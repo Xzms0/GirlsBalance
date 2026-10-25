@@ -2,18 +2,14 @@
 # -*- coding: utf-8 -*-
 """girls_dict（超超你的字典）本地服务端 —— SQLite 版本。
 
-只用 Python 标准库（http.server + sqlite3），零依赖。它做三件事：
+只用 Python 标准库（http.server + sqlite3），零依赖。它做两件事：
 
 1. 把 ``public/``（本机管理端）当静态网站托管；
 2. 暴露读写 ``data/girls_dict.sqlite3`` 的 REST 接口（补丁式增量写入 + 只读查询）；
-3. 首次启动时，如果发现旁边还有旧版的 ``data/girls_dict.json``，自动迁移进
-   SQLite 并把旧文件归档到 ``data/legacy/``（绝不删除）。
-
 运行：
     python server/server.py                 # http://127.0.0.1:8777
     python server/server.py --port 9000 --open
     python server/server.py --data D:/xiachao/girls_dict.sqlite3
-    python server/server.py --migrate-json D:/old/girls_dict.json   # 手工迁移后退出
 """
 
 from __future__ import annotations
@@ -44,7 +40,7 @@ from girls_db import (  # noqa: E402  (需要先插入 sys.path)
     OpError,
     RevisionConflict,
     ValidationError,
-    normalize_document,
+    validate_export_document,
 )
 from site_publish import SITE_FORMAT_VERSION, publish_site, publish_status  # noqa: E402
 
@@ -56,7 +52,6 @@ MAX_BODY = 64 * 1024 * 1024
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PUBLIC = ROOT / "public"
 DEFAULT_DATA = ROOT / "data" / "girls_dict.sqlite3"
-DEFAULT_LEGACY = ROOT / "data" / "girls_dict.json"
 
 
 def harden_stdio() -> None:
@@ -168,9 +163,12 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if parsed.path == "/api/db":
                 payload = self._read_json()
-                if "db" in payload and payload["db"] is None:
-                    return self._error(400, "db 字段不能为 null")
-                document = payload.get("db", payload)
+                self._envelope(payload, ["db", "revision", "force"])
+                if "db" not in payload:
+                    raise ValueError("缺少 db 字段")
+                if payload["db"] is None:
+                    raise ValueError("db 字段不能为 null")
+                document = payload["db"]
                 revision = payload.get("revision")
                 explicit_force = bool(payload.get("force"))
                 # 整库替换是「覆盖一切」的操作，必须表明意图：
@@ -182,8 +180,7 @@ class Handler(BaseHTTPRequestHandler):
                             "整库替换会覆盖现有数据：请带上 revision（并处理 409），或显式传 force: true")
                 result = self.database.replace_all(
                     document, expected_revision=revision,
-                    force=explicit_force or revision is None,
-                    strict=bool(payload.get("strict")))
+                    force=explicit_force or revision is None)
                 return self._json(200, {"ok": True, **result})
             return self._error(404, f"没有这个接口：PUT {parsed.path}")
         except RevisionConflict as conflict:
@@ -210,17 +207,20 @@ class Handler(BaseHTTPRequestHandler):
                     force=bool(payload.get("force")), label=str(payload.get("label") or "patch"))
                 return self._json(200, {"ok": True, **result})
             if parsed.path == "/api/db/import":
+                self._envelope(payload, ["db", "path"])
+                if ("db" in payload) == ("path" in payload):
+                    raise ValueError("必须且只能提供 db 或 path")
                 if "db" in payload and payload["db"] is None:
-                    return self._error(400, "db 字段不能为 null")
-                if isinstance(payload.get("path"), str):
-                    result = self.database.import_json(payload["path"],
-                                                       archive=bool(payload.get("archive")))
-                else:
-                    result = self.database.import_json(payload.get("db", payload), archive=False)
+                    raise ValueError("db 字段不能为 null")
+                if "path" in payload and not isinstance(payload["path"], str):
+                    raise ValueError("path 必须是字符串")
+                result = self.database.import_json(payload["path"] if "path" in payload else payload["db"])
                 return self._json(200, {"ok": True, **result})
             if parsed.path == "/api/db/validate":
-                issues: List[Dict[str, str]] = []
-                normalize_document(payload.get("db", payload), issues)
+                self._envelope(payload, ["db"])
+                if "db" not in payload:
+                    raise ValueError("缺少 db 字段")
+                issues = validate_export_document(payload["db"])
                 errors = [i for i in issues if i["level"] == "error"]
                 return self._json(200, {"ok": True, "valid": not errors, "issues": issues})
             if parsed.path == "/api/db/clear":
@@ -257,6 +257,13 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:  # pragma: no cover
             self._error(500, f"服务端异常：{exc}")
 
+    @staticmethod
+    def _envelope(payload, allowed):
+        if not isinstance(payload, dict):
+            raise ValueError("请求体必须是对象")
+        if any(key not in allowed for key in payload):
+            raise ValueError("请求体包含未知字段")
+
     def _conflict(self, conflict: RevisionConflict) -> None:
         self._json(409, {
             "ok": False,
@@ -282,7 +289,6 @@ class Handler(BaseHTTPRequestHandler):
                 "backupDir": str(database.backup_dir),
                 "revision": index["revision"], "updatedAt": index["updatedAt"],
                 "chapters": index["stats"]["chapters"], "panels": index["stats"]["panels"],
-                "migration": database.migration or database.migration_info(),
                 "time": datetime.now().isoformat(timespec="seconds"),
             })
         if path == "/api/index":
@@ -290,8 +296,6 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/db":
             document = database.load_document()
             return self._json(200, {"ok": True, "revision": document["revision"], "db": document})
-        if path == "/api/db/raw":
-            return self._send(200, database.export_json().encode("utf-8"), "application/json; charset=utf-8")
         if path == "/api/db/export":
             fmt = (query.get("format") or ["json"])[0].lower()
             if fmt == "csv":
@@ -374,7 +378,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 ENDPOINTS = [
-    {"method": "GET", "path": "/api/health", "desc": "服务信息、数据库文件、版本号、迁移情况"},
+    {"method": "GET", "path": "/api/health", "desc": "服务信息、数据库文件、版本号"},
     {"method": "GET", "path": "/api/index", "desc": "轻量目录：每话的计数与元信息，不含槽位内容"},
     {"method": "GET", "path": "/api/chapters/{id}", "desc": "读取一话（含槽位与角色编号）"},
     {"method": "GET", "path": "/api/chapters/{id}/panels/{pid}", "desc": "读取单个槽位"},
@@ -385,7 +389,6 @@ ENDPOINTS = [
     {"method": "POST", "path": "/api/db/clear", "desc": "清空所有数据"},
     {"method": "POST", "path": "/api/db/validate", "desc": "只校验不写入"},
     {"method": "GET", "path": "/api/db/export?format=json|csv|sqlite", "desc": "导出 JSON / CSV / SQLite"},
-    {"method": "GET", "path": "/api/db/raw", "desc": "JSON 文本"},
     {"method": "GET", "path": "/api/stats", "desc": "角色出场次数等派生统计"},
     {"method": "GET", "path": "/api/find?char=12", "desc": "某个角色出现在哪些话/槽位"},
     {"method": "GET", "path": "/api/search?q=文字", "desc": "按标题/备注/角色名搜索"},
@@ -414,9 +417,8 @@ def pick_port(host: str, port: int) -> int:
 def run_server(data_file: Path, public_dir: Path, host: str = "127.0.0.1", port: int = 8777,
                open_browser: bool = False, quiet: bool = False,
                allowed_origins: Optional[List[str]] = None,
-               legacy_json: Optional[Path] = None,
                backup_interval: float = 600.0) -> ThreadingHTTPServer:
-    database = GirlsDB(data_file, backup_interval=backup_interval, legacy_json=legacy_json)
+    database = GirlsDB(data_file, backup_interval=backup_interval)
     database.initialize()
     handler = type("BoundHandler", (Handler,), {
         "database": database,
@@ -432,11 +434,6 @@ def run_server(data_file: Path, public_dir: Path, host: str = "127.0.0.1", port:
         print(f"│  前端页面 : {url}")
         print(f"│  数据库   : {database.path}")
         print(f"│  备份目录 : {database.backup_dir}")
-        if database.migration and database.migration.get("ok"):
-            print(f"│  已迁移   : {database.migration['source']} → "
-                  f"{database.migration['chapters']} 话 / {database.migration['panels']} 槽位")
-            if database.migration.get("archived"):
-                print(f"│  （旧 JSON 已归档到 {database.migration['archived']}）")
         print("└─ Ctrl+C 停止服务")
     if open_browser:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
@@ -454,47 +451,31 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--allow-origin", action="append", default=[], help="额外允许的跨域来源")
     parser.add_argument("--backup-interval", type=float, default=600.0,
                         help="两次自动快照的最小间隔（秒），0 表示关闭")
-    parser.add_argument("--legacy-json", default=str(DEFAULT_LEGACY),
-                        help="旧版单文件 JSON 的位置，仅用于首次自动迁移")
-    parser.add_argument("--migrate-json", default="",
-                        help="手工迁移指定的 JSON 文件后退出（不启动服务）")
     parser.add_argument("--check", action="store_true", help="自检并打印概览后退出")
     args = parser.parse_args(argv)
 
     data_file = Path(args.data)
     public_dir = Path(args.public)
-    legacy = Path(args.legacy_json) if args.legacy_json else None
-
-    if args.migrate_json:
-        source = Path(args.migrate_json).resolve()
-        if not source.is_file():
-            print(f"找不到要迁移的 JSON：{source}", file=sys.stderr)
-            return 2
-        database = GirlsDB(data_file, backup_interval=0, legacy_json=None)
-        database.initialize()
-        result = database.import_json(source, archive=True)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0
 
     if not public_dir.is_dir():
         print(f"找不到前端目录：{public_dir}", file=sys.stderr)
         return 2
 
-    database = GirlsDB(data_file, backup_interval=args.backup_interval, legacy_json=legacy)
+    database = GirlsDB(data_file, backup_interval=args.backup_interval)
     database.initialize()
     if args.check:
         index = database.load_index()
         print(json.dumps({
             "ok": True, "storage": "sqlite", "dataFile": str(database.path),
             "size": database.db_size(), "revision": index["revision"],
-            "stats": index["stats"], "migration": database.migration,
+            "stats": index["stats"],
             "issues": database.integrity_check(),
         }, ensure_ascii=False, indent=2))
         return 0
 
     port = pick_port(args.host, args.port)
     httpd = run_server(data_file, public_dir, host=args.host, port=port, open_browser=args.open,
-                       quiet=args.quiet, allowed_origins=args.allow_origin, legacy_json=legacy,
+                       quiet=args.quiet, allowed_origins=args.allow_origin,
                        backup_interval=args.backup_interval)
     try:
         httpd.serve_forever()
