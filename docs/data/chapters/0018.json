@@ -1,6 +1,7 @@
 {
   "schema": "girls_dict",
-  "schemaVersion": 2, "formatVersion": 3,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "no": 18,
   "title": "找出谎言的魔女审判",
   "note": "",

@@ -1,6 +1,7 @@
 {
   "schema": "girls_dict",
-  "schemaVersion": 2, "formatVersion": 3,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "no": 81,
   "title": "剑道部的女骑士同学",
   "note": "",

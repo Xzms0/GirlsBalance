@@ -1,6 +1,7 @@
 {
   "schema": "girls_dict",
-  "schemaVersion": 2, "formatVersion": 3,
+  "schemaVersion": 2,
+  "formatVersion": 3,
   "no": 20,
   "title": "既然说要做，那就全力做一回奖励回",
   "note": "",
