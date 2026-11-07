@@ -2,8 +2,8 @@
   "schema": "girls_dict",
   "schemaVersion": 2,
   "formatVersion": 4,
-  "revision": 16532,
-  "exportedAt": "2026-11-07T16:10:47+00:00",
+  "revision": 16547,
+  "exportedAt": "2026-11-07T16:13:57+00:00",
   "chapters": [
     {
       "no": 1,
@@ -2210,6 +2210,17 @@
         "19": {"count": 3, "points": 1.111111, "weighted": 2.777778}
       },
       "file": "0100.json"
+    },
+    {
+      "no": 101,
+      "title": "妹是芽衣姐姐的妹妹",
+      "note": "",
+      "panelCount": 3,
+      "appearances": 3,
+      "characters": [8, 20],
+      "weight": 21,
+      "metrics": {"8": {"count": 1, "points": 0.4, "weighted": 1.05}, "20": {"count": 2, "points": 1.2, "weighted": 3.15}},
+      "file": "0101.json"
     }
   ]
 }

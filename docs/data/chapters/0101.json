@@ -1,0 +1,12 @@
+{
+  "schema": "girls_dict",
+  "schemaVersion": 2,
+  "formatVersion": 4,
+  "no": 101,
+  "title": "妹是芽衣姐姐的妹妹",
+  "note": "",
+  "panelCount": 3,
+  "appearances": 3,
+  "characters": [8, 20],
+  "panels": [{"chars": [20]}, {"chars": [8, 20]}, {"chars": []}]
+}
