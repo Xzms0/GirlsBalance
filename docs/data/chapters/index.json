@@ -2,8 +2,8 @@
   "schema": "girls_dict",
   "schemaVersion": 2,
   "formatVersion": 4,
-  "revision": 16442,
-  "exportedAt": "2026-10-25T16:16:02+00:00",
+  "revision": 16532,
+  "exportedAt": "2026-11-07T16:10:47+00:00",
   "chapters": [
     {
       "no": 1,
@@ -2178,6 +2178,38 @@
         "19": {"count": 6, "points": 2.88, "weighted": 7.2}
       },
       "file": "0099.json"
+    },
+    {
+      "no": 100,
+      "title": "能连载本身已经很幸福了 非常感谢每一个人 接下来我们一起继续努力吧",
+      "note": "",
+      "panelCount": 62,
+      "appearances": 138,
+      "characters": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      "weight": 20,
+      "metrics": {
+        "0": {"count": 6, "points": 2.92, "weighted": 7.3},
+        "1": {"count": 13, "points": 3.604444, "weighted": 9.011111},
+        "2": {"count": 9, "points": 2.804444, "weighted": 7.011111},
+        "3": {"count": 4, "points": 1.244444, "weighted": 3.111111},
+        "4": {"count": 5, "points": 1.711111, "weighted": 4.277778},
+        "5": {"count": 7, "points": 2.071111, "weighted": 5.177778},
+        "6": {"count": 6, "points": 2.111111, "weighted": 5.277778},
+        "7": {"count": 8, "points": 2.244444, "weighted": 5.611111},
+        "8": {"count": 16, "points": 7.826667, "weighted": 19.566667},
+        "9": {"count": 5, "points": 2.071111, "weighted": 5.177778},
+        "10": {"count": 8, "points": 3.804444, "weighted": 9.511111},
+        "11": {"count": 3, "points": 1.004444, "weighted": 2.511111},
+        "12": {"count": 4, "points": 1.204444, "weighted": 3.011111},
+        "13": {"count": 14, "points": 4.764444, "weighted": 11.911111},
+        "14": {"count": 5, "points": 1.644444, "weighted": 4.111111},
+        "15": {"count": 5, "points": 1.777778, "weighted": 4.444444},
+        "16": {"count": 2, "points": 0.844444, "weighted": 2.111111},
+        "17": {"count": 12, "points": 3.831111, "weighted": 9.577778},
+        "18": {"count": 3, "points": 1.004444, "weighted": 2.511111},
+        "19": {"count": 3, "points": 1.111111, "weighted": 2.777778}
+      },
+      "file": "0100.json"
     }
   ]
 }
