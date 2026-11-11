@@ -64,7 +64,7 @@
       return number.toLocaleString('zh-CN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }) + '%';
+      });
     }
     return number.toLocaleString('zh-CN', {
       minimumFractionDigits: 1,
