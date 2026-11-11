@@ -378,7 +378,7 @@
         '<span class="char">' + esc(item.char) + '</span>' +
         '<span class="name' + (name ? '' : ' empty-name') + '">' + esc(name) + '</span>' +
         '<span class="track"><span class="bar" style="width:' + width.toFixed(2) +
-        '%;background:' + color + '"></span></span>' +
+        ';background:' + color + '"></span></span>' +
         '<span class="value">' + esc(formatValue(item.value, state.metric)) + '</span>' +
         '</div>';
     }).join('');
